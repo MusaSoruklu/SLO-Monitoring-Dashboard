@@ -1,0 +1,20 @@
+<div class="container">
+  <h1>{{ title }}</h1>
+  <input type="text" [(ngModel)]="ticker" placeholder="Enter Ticker (e.g., AAPL)">
+  <button (click)="searchTicker(ticker)">Search</button>
+
+  <div *ngIf="stockData">
+    <h2>Stock Price: {{ stockData.closing_price }}</h2>
+  </div>
+  <div *ngIf="error">
+    <h2>{{ error }}</h2>
+  </div>
+  <div *ngIf="topStocks">
+    <h2>Top Stocks:</h2>
+    <ul>
+      <li *ngFor="let stock of topStocks | keyvalue">
+        {{ stock.key }}: {{ getLastPrice(stock.value) | number:'1.2-2' }}
+      </li>
+    </ul>
+  </div>
+</div>
