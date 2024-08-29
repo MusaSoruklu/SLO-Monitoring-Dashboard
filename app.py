@@ -1,8 +1,12 @@
 from flask import Flask, jsonify
 import yfinance as yf
+import pandas as pd
 from prometheus_client import start_http_server, Summary, Counter, Gauge, generate_latest
+from flask_cors import CORS
+
 
 app = Flask(__name__)
+CORS(app)
 
 # Prometheus metrics
 REQUEST_COUNT = Counter('request_count', 'Total number of requests')
@@ -38,6 +42,23 @@ def get_stock_price(ticker):
     except Exception as e:
         ERROR_COUNT.inc()
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/top-stocks', methods=['GET'])
+def get_top_stocks():
+    REQUEST_COUNT.inc()
+    tickers = "AAPL MSFT GOOGL AMZN META"  # Example tickers
+    try:
+        data = yf.download(tickers, period='1d')['Close']
+        # Convert index to string if it's a Timestamp
+        if isinstance(data.index, pd.DatetimeIndex):
+            data.index = data.index.strftime('%Y-%m-%d')
+        results = data.to_dict()
+        SUCCESS_COUNT.inc()
+        return jsonify(results)
+    except Exception as e:
+        ERROR_COUNT.inc()
+        return jsonify({"error": str(e), "failed_tickers": []}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
