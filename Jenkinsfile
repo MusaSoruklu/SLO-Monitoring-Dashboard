@@ -2,13 +2,16 @@ pipeline {
     agent any
 
     environment {
-
+        DOCKER_CREDENTIALS_ID = 'my-docker-credentials'  // Use the ID you set in Jenkins
+        DOCKER_REGISTRY = 'saeidnkh'  // Your Docker Hub username
+        FRONTEND_IMAGE = "${DOCKER_REGISTRY}/frontend"  // Replace with your frontend repo name
+        BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend"  // Replace with your backend repo name
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/your-repo/SLO-Monitoring-Dashboard.git'
+                git 'https://github.com/MusaSoruklu/SLO-Monitoring-Dashboard.git'
             }
         }
 
@@ -44,14 +47,6 @@ pipeline {
                     docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
                         docker.image("${FRONTEND_IMAGE}:${env.BUILD_NUMBER}").push()
                     }
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                withKubeConfig(credentialsId: KUBECONFIG_CREDENTIALS_ID) {
-                    sh 'kubectl apply -f kubernetes/deployment.yaml'
                 }
             }
         }
