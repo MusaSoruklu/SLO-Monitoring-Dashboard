@@ -62,7 +62,6 @@ The web application is a simple trading system that displays real-time stock dat
     - Push Frontend (stage): Pushes the frontend Docker image to the Docker registry.
     - Post Actions (post): Cleans up the workspace after the build process is complete.
 
-1. 
 
 <div align="right">
 
