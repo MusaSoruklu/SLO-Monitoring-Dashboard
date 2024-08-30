@@ -36,7 +36,7 @@ export class FinanceService {
   }
 
   getMarketNews(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/market-news`);
+    return this.http.get(`http://localhost:5000/market-news`);
   }
 }
 

@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Finance Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-  <script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script> <!-- for icons -->
+  <script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script>
 </head>
+
 <body>
   <section class="hero is-dark is-bold">
     <div class="hero-body">
@@ -34,31 +36,39 @@
         </aside>
       </div>
       <div class="column is-three-quarters">
-        <div class="box has-background-grey-dark">
-          <h3 class="title is-4 has-text-white">Stock Search</h3>
-          <div class="field has-addons">
-            <div class="control is-expanded">
-              <input class="input" type="text" [(ngModel)]="ticker" placeholder="Enter Ticker (e.g., AAPL)">
+        <div class="columns">
+          <div class="column is-two-thirds">
+            <div class="box has-background-grey-dark">
+              <div *ngIf="stockData" class="notification is-primary">
+                <h2 class="subtitle">Stock Price: {{ stockData.closing_price | number:'1.2-2' }}</h2>
+              </div>
+              <div *ngIf="error" class="notification is-danger">
+                <h2 class="subtitle">{{ error }}</h2>
+              </div>
+              <canvas #stockChart width="800" height="400"></canvas>
             </div>
-            <div class="control">
-              <button class="button is-info">Search</button>
-            </div>
           </div>
-          <div *ngIf="stockData" class="notification is-primary">
-            <h2 class="subtitle">Stock Price: {{ stockData.closing_price | number:'1.2-2' }}</h2>
+          <div class="column">
+            <article class="panel is-danger">
+              <p class="panel-heading">
+                Market News
+              </p>
+              <div class="panel-block" *ngFor="let news of marketNews">
+                <article class="media">
+                  <div class="media-content">
+                    <div class="content">
+                      <p class="news-title">{{ news.title }}</p>
+                      <p class="news-content">{{ news.content }}</p>
+                      <p class="news-meta">
+                        <span class="news-ticker">Ticker: {{ news.tickers }}</span> |
+                        <span class="news-date">Posted: {{ news.posted_on }}</span>
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </article>
           </div>
-          <div *ngIf="error" class="notification is-danger">
-            <h2 class="subtitle">{{ error }}</h2>
-          </div>
-          <div class="tabs is-toggle is-fullwidth">
-            <ul>
-              <li (click)="changeChart('line')"><a>Line</a></li>
-              <li (click)="changeChart('bar')"><a>Bar</a></li>
-              <li (click)="changeChart('radar')"><a>Radar</a></li>
-              <li (click)="changeChart('pie')"><a>Pie</a></li>
-            </ul>
-          </div>
-          <canvas #stockChart width="800" height="400"></canvas>
         </div>
         <!-- Additional Stats and Graphs -->
         <div class="columns">
@@ -79,30 +89,9 @@
             </article>
           </div>
         </div>
-        <div class="columns">
-          <div class="column">
-            <article class="panel is-danger">
-              <p class="panel-heading">
-                Market News
-              </p>
-              <div class="panel-block" *ngFor="let news of marketNews">
-                <article class="media">
-                  <div class="media-content">
-                    <div class="content">
-                      <p>
-                        <strong>{{ news.title }}</strong>
-                        <br>
-                        {{ news.summary }}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              </div>
-            </article>
-          </div>
-        </div>
       </div>
     </div>
   </div>
 </body>
+
 </html>
