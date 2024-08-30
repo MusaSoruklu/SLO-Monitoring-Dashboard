@@ -1,7 +1,7 @@
 # Stage 1: Build the Angular application
 
-# Use an official Node.js runtime as a parent image
-FROM node:14-alpine AS build
+# Use an official Node.js runtime as a parent image with Node.js 18.x
+FROM node:18-alpine AS build
 
 # Set the working directory in the container
 WORKDIR /app
