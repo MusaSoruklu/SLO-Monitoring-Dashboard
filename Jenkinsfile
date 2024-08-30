@@ -11,6 +11,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                git branch: 'main',
                 git 'https://github.com/MusaSoruklu/SLO-Monitoring-Dashboard.git'
             }
         }
