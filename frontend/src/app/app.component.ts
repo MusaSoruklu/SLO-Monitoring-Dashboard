@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { FinanceService } from './services/finance.service';
 import {
   Chart,
@@ -8,6 +8,8 @@ import {
   PointElement,
   LineElement,
   LineController,
+  BarController,
+  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -23,6 +25,8 @@ Chart.register(
   PointElement,
   LineElement,
   LineController,
+  BarController,
+  BarElement,
   Title,
   Tooltip,
   Legend
@@ -33,14 +37,22 @@ Chart.register(
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
   @ViewChild('stockChart') stockChart!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('revenueChart') revenueChart!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('earningsChart') earningsChart!: ElementRef<HTMLCanvasElement>;
   chart!: Chart;
   error: string | null = null;
   ticker: string = '';
   stockData: StockData | null = null;  // Use the interface and initialize as null
-  revenueTrends: any;
-  earningsInsights: any;
+  revenueTrends = {
+    dates: ['2024-01-01', '2024-02-01', '2024-03-01', '2024-04-01', '2024-05-01'],
+    revenues: [150000, 155000, 160000, 162000, 165000]
+  };
+  earningsInsights = {
+    EPS: ['2.50', '2.75', '3.00', '3.25', '3.50'],
+    ProfitMargin: ['20%', '21%', '21.5%', '22%', '22.5%']
+  };
   marketNews: any;
 
   constructor(private financeService: FinanceService) { }
@@ -48,15 +60,21 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.fetchHistoricalTopStocks();
     this.fetchMarketNews();
-    this.fetchRevenueTrends('AAPL');
-    this.fetchEarningsInsights('AAPL');
+  }
+
+  ngAfterViewInit() {
+    this.initCharts();
+  }
+
+  initCharts(): void {
+    this.initRevenueChart();
+    this.initEarningsChart();
   }
 
   changeChart(type: ChartType) {
     if (!this.stockData) {
       return; // Guard clause if there's no data
     }
-    // Assume `stockData` holds data necessary for all chart types
     this.initChart(type, {
       labels: Object.keys(this.stockData), // Adjust accordingly
       datasets: [{
@@ -95,6 +113,50 @@ export class AppComponent implements OnInit {
     this.chart = new Chart(context, config);
   }
 
+  initRevenueChart() {
+    const context = this.revenueChart.nativeElement.getContext('2d');
+    if (!context) {
+      console.error('Failed to get canvas context for revenue chart');
+      return;
+    }
+    const revenueChartData = {
+      labels: this.revenueTrends.dates,
+      datasets: [{
+        label: 'Revenue',
+        data: this.revenueTrends.revenues,
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)'
+      }]
+    };
+    new Chart(context, {
+      type: 'line',
+      data: revenueChartData,
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+  }
+
+  initEarningsChart() {
+    const context = this.earningsChart.nativeElement.getContext('2d');
+    if (!context) {
+      console.error('Failed to get canvas context for earnings chart');
+      return;
+    }
+    const earningsChartData = {
+      labels: this.revenueTrends.dates,
+      datasets: [{
+        label: 'EPS',
+        data: this.earningsInsights.EPS,
+        borderColor: 'rgb(54, 162, 235)',
+        backgroundColor: 'rgba(54, 162, 235, 0.5)'
+      }]
+    };
+    new Chart(context, {
+      type: 'bar',
+      data: earningsChartData,
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+  }
+
   fetchHistoricalTopStocks() {
     this.financeService.getHistoricalTopStocks().subscribe({
       next: (response) => {
@@ -108,7 +170,7 @@ export class AppComponent implements OnInit {
             tension: 0.1
           }))
         };
-        this.initChart('line', chartData);  // Specify 'line' directly here
+        this.initChart('line', chartData);
       },
       error: (err) => {
         this.error = 'Failed to fetch historical stock data';
@@ -129,7 +191,7 @@ export class AppComponent implements OnInit {
   searchTicker(ticker: string) {
     this.financeService.getStockPrice(ticker).subscribe({
       next: (data) => {
-        console.log('Stock Data:', data); // Handle display of individual stock data
+        console.log('Stock Data:', data);
         this.error = null;
       },
       error: (err) => {
@@ -147,29 +209,6 @@ export class AppComponent implements OnInit {
     });
   }
 
-  fetchRevenueTrends(ticker: string) {
-    if (!ticker) {
-      console.error("Ticker is required");
-      return;
-    }
-    this.financeService.getRevenueTrends(ticker).subscribe({
-      next: (data) => this.revenueTrends = data,
-      error: (err) => this.handleError(err)
-    });
-  }
-
-  // Call this method with a valid ticker
-  fetchEarningsInsights(ticker: string) {
-    if (!ticker) {
-      console.error("Ticker is required");
-      return;
-    }
-    this.financeService.getEarningsInsights(ticker).subscribe({
-      next: (data) => this.earningsInsights = data,
-      error: (err) => this.handleError(err)
-    });
-  }
-
   handleError(error: any) {
     console.error('An error occurred:', error);
     this.error = 'Failed to load data. Please try again later.';
@@ -182,5 +221,4 @@ export class AppComponent implements OnInit {
 
 interface StockData {
   closing_price: number;
-  // Add other properties that you expect in the response
 }

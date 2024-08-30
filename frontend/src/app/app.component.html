@@ -22,7 +22,7 @@
 
   <div class="container mt-5">
     <div class="columns">
-      <div class="column is-one-quarter">
+      <div class="column is-one-fifth">
         <aside class="menu">
           <p class="menu-label has-text-white">General</p>
           <ul class="menu-list">
@@ -35,7 +35,7 @@
           </ul>
         </aside>
       </div>
-      <div class="column is-three-quarters">
+      <div class="column">
         <div class="columns">
           <div class="column is-two-thirds">
             <div class="box has-background-grey-dark">
@@ -46,6 +46,14 @@
                 <h2 class="subtitle">{{ error }}</h2>
               </div>
               <canvas #stockChart width="800" height="400"></canvas>
+            </div>
+            <div class="column">
+              <article class="panel is-warning">
+                <p class="panel-heading">Earnings Insights</p>
+                <div class="panel-block">
+                  <canvas #earningsChart width="400" height="200"></canvas>
+                </div>
+              </article>
             </div>
           </div>
           <div class="column">
@@ -70,22 +78,13 @@
             </article>
           </div>
         </div>
-        <!-- Additional Stats and Graphs -->
         <div class="columns">
-          <div class="column is-half">
+          <div class="column">
             <article class="panel is-info">
-              <p class="panel-heading">
-                Revenue Trends
-              </p>
-              <canvas #revenueChart width="400" height="200"></canvas>
-            </article>
-          </div>
-          <div class="column is-half">
-            <article class="panel is-warning">
-              <p class="panel-heading">
-                Earnings Insights
-              </p>
-              <canvas #earningsChart width="400" height="200"></canvas>
+              <p class="panel-heading">Revenue Trends</p>
+              <div class="panel-block">
+                <canvas #revenueChart width="400" height="200"></canvas>
+              </div>
             </article>
           </div>
         </div>

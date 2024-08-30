@@ -201,7 +201,7 @@ def get_market_news():
 
     return jsonify(results)
     
-@app.route('/earnings-insights/<ticker>', methods=['GET'])
+@app.route('/earnings-insights', methods=['GET'])
 def get_earnings_insights(ticker):
     REQUEST_COUNT.inc()
     try:
