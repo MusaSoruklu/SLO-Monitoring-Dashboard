@@ -25,7 +25,7 @@ RUN npm run build --prod
 FROM nginx:alpine
 
 # Copy the built Angular application from the build stage
-COPY --from=build /app/dist/your-angular-app /usr/share/nginx/html
+COPY --from=build /app/dist/slo-monitoring-dashboard-frontend /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80
