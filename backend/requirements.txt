@@ -1,0 +1,8 @@
+Flask
+yfinance
+pandas
+requests
+prometheus_client
+flask_cors
+alpha_vantage
+flask_sqlalchemy
