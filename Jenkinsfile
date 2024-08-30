@@ -2,11 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'your-docker-credentials-id'
-        KUBECONFIG_CREDENTIALS_ID = 'your-kubeconfig-credentials-id'
-        DOCKER_REGISTRY = 'your-docker-registry'
-        FRONTEND_IMAGE = "${DOCKER_REGISTRY}/your-frontend-image"
-        BACKEND_IMAGE = "${DOCKER_REGISTRY}/your-backend-image"
+
     }
 
     stages {
