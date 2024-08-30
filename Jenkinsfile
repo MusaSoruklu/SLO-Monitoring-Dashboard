@@ -9,10 +9,11 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
                 git branch: 'main',
-                git 'https://github.com/MusaSoruklu/SLO-Monitoring-Dashboard.git'
+                    url: 'https://github.com/MusaSoruklu/SLO-Monitoring-Dashboard.git',
+                    credentialsId: '393c2634-6f7b-4e89-9814-9e7b5df6594d'
             }
         }
 
