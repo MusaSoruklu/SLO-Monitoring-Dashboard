@@ -7,7 +7,7 @@ The web application is a simple trading system that displays real-time stock dat
 
 ## Table of Contents
 
-#### 🟣 &nbsp; [Installation and usage instructions](#1-license-information)
+#### 🟣 &nbsp; [Installation and usage instructions](#1-installation-and-usage-instructions)
 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◎ &nbsp; [Usage ]()
 #### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◎ &nbsp; [Tools and dependencies]()
 
@@ -46,7 +46,23 @@ The web application is a simple trading system that displays real-time stock dat
 
 ## 3. File structure of the project
 
+1. **web_traffic_simulator.py :** Script to simulate web server traffic and log response times to a SQLite database.
 
+    - setup_database (function): Sets up the SQLite database to store response times, timestamps, and HTTP status codes.
+    - random_delay (wrapper function): Adds a random delay between each HTTP request to simulate more realistic traffic patterns.
+    - make_request (function): Sends an HTTP GET request to the web application. Logs the response time and status code to the SQLite database.
+    - simulate_traffic (function): Simulates traffic by repeatedly calling make_request for the number of requests defined in NUM_REQUESTS.
+
+1. **JenkinsFIle :** Defines a Jenkins pipeline for building and pushing Docker images for frontend and backend applications.
+
+    - Checkout SCM (stage): Retrieves the source code from the specified Git repository using the 'main' branch and provided credentials.
+    - Build Backend (stage): Builds the Docker image for the backend application and tags it with the current build number.
+    - Build Frontend (stage): Builds the Docker image for the frontend application and tags it with the current build number.
+    - Push Backend (stage): Pushes the backend Docker image to the Docker registry.
+    - Push Frontend (stage): Pushes the frontend Docker image to the Docker registry.
+    - Post Actions (post): Cleans up the workspace after the build process is complete.
+
+1. 
 
 <div align="right">
 
