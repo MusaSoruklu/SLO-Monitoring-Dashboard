@@ -1,20 +1,108 @@
-<div class="container">
-  <h1>{{ title }}</h1>
-  <input type="text" [(ngModel)]="ticker" placeholder="Enter Ticker (e.g., AAPL)">
-  <button (click)="searchTicker(ticker)">Search</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+  <script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script> <!-- for icons -->
+</head>
+<body>
+  <section class="hero is-dark is-bold">
+    <div class="hero-body">
+      <div class="container has-text-centered">
+        <h1 class="title">Finance Dashboard</h1>
+        <h2 class="subtitle">Monitor key financial metrics</h2>
+        <button class="button is-light" (click)="toggleTheme()">Toggle Theme</button>
+      </div>
+    </div>
+  </section>
 
-  <div *ngIf="stockData">
-    <h2>Stock Price: {{ stockData.closing_price }}</h2>
+  <div class="container mt-5">
+    <div class="columns">
+      <div class="column is-one-quarter">
+        <aside class="menu">
+          <p class="menu-label has-text-white">General</p>
+          <ul class="menu-list">
+            <li><a>Dashboard</a></li>
+            <li><a>Stocks</a></li>
+          </ul>
+          <p class="menu-label has-text-white">Administration</p>
+          <ul class="menu-list">
+            <li><a>Team Settings</a></li>
+          </ul>
+        </aside>
+      </div>
+      <div class="column is-three-quarters">
+        <div class="box has-background-grey-dark">
+          <h3 class="title is-4 has-text-white">Stock Search</h3>
+          <div class="field has-addons">
+            <div class="control is-expanded">
+              <input class="input" type="text" [(ngModel)]="ticker" placeholder="Enter Ticker (e.g., AAPL)">
+            </div>
+            <div class="control">
+              <button class="button is-info">Search</button>
+            </div>
+          </div>
+          <div *ngIf="stockData" class="notification is-primary">
+            <h2 class="subtitle">Stock Price: {{ stockData.closing_price | number:'1.2-2' }}</h2>
+          </div>
+          <div *ngIf="error" class="notification is-danger">
+            <h2 class="subtitle">{{ error }}</h2>
+          </div>
+          <div class="tabs is-toggle is-fullwidth">
+            <ul>
+              <li (click)="changeChart('line')"><a>Line</a></li>
+              <li (click)="changeChart('bar')"><a>Bar</a></li>
+              <li (click)="changeChart('radar')"><a>Radar</a></li>
+              <li (click)="changeChart('pie')"><a>Pie</a></li>
+            </ul>
+          </div>
+          <canvas #stockChart width="800" height="400"></canvas>
+        </div>
+        <!-- Additional Stats and Graphs -->
+        <div class="columns">
+          <div class="column is-half">
+            <article class="panel is-info">
+              <p class="panel-heading">
+                Revenue Trends
+              </p>
+              <canvas #revenueChart width="400" height="200"></canvas>
+            </article>
+          </div>
+          <div class="column is-half">
+            <article class="panel is-warning">
+              <p class="panel-heading">
+                Earnings Insights
+              </p>
+              <canvas #earningsChart width="400" height="200"></canvas>
+            </article>
+          </div>
+        </div>
+        <div class="columns">
+          <div class="column">
+            <article class="panel is-danger">
+              <p class="panel-heading">
+                Market News
+              </p>
+              <div class="panel-block" *ngFor="let news of marketNews">
+                <article class="media">
+                  <div class="media-content">
+                    <div class="content">
+                      <p>
+                        <strong>{{ news.title }}</strong>
+                        <br>
+                        {{ news.summary }}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div *ngIf="error">
-    <h2>{{ error }}</h2>
-  </div>
-  <div *ngIf="topStocks">
-    <h2>Top Stocks:</h2>
-    <ul>
-      <li *ngFor="let stock of topStocks | keyvalue">
-        {{ stock.key }}: {{ getLastPrice(stock.value) | number:'1.2-2' }}
-      </li>
-    </ul>
-  </div>
-</div>
+</body>
+</html>
