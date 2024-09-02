@@ -10,15 +10,21 @@
 </head>
 
 <body>
-  <section class="hero is-dark is-bold">
+  <section class="hero is-dark is-bold is-small">
     <div class="hero-body">
-      <div class="container has-text-centered">
-        <h1 class="title">Finance Dashboard</h1>
-        <h2 class="subtitle">Monitor key financial metrics</h2>
-        <button class="button is-light" (click)="toggleTheme()">Toggle Theme</button>
+      <div class="container">
+        <div class="columns">
+          <div class="column is-8">
+            <h1 class="title">Finance Dashboard</h1>
+            <h2 class="subtitle">Monitor key financial metrics</h2>
+          </div>
+          <div class="column is-4 has-text-right">
+            <button class="button is-light" (click)="toggleTheme()">Toggle Theme</button>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
+  </section>  
 
   <div class="container mt-5">
     <div class="columns">
