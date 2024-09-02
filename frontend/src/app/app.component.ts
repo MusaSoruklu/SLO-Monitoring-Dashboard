@@ -101,7 +101,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       type: type as keyof ChartTypeRegistry,
       data: data,
       options: {
-        responsive: true,
+        responsive: false,
         scales: {
           y: {
             beginAtZero: false
