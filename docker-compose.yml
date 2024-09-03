@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: instance/Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - monitoring
+    environment:
+      - FLASK_ENV=production
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3001:80"  # Assuming your frontend runs on port 80 inside the container
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./backend/instance/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Set a strong admin password
+
+networks:
+  monitoring:
+    driver: bridge
