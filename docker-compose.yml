@@ -4,9 +4,9 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: instance/Dockerfile
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8001"
     networks:
       - monitoring
     environment:
@@ -15,15 +15,16 @@ services:
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "3001:80"  # Assuming your frontend runs on port 80 inside the container
+      - "3001:80"
     networks:
       - monitoring
 
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./backend/instance/prometheus.yml:/etc/prometheus/prometheus.yml
+      - "/d/Saeid/wiley/New folder/SLO-Monitoring-Dashboard/backend/prometheus.yml:/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
     networks:
@@ -36,7 +37,7 @@ services:
     networks:
       - monitoring
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin  # Set a strong admin password
+      - GF_SECURITY_ADMIN_PASSWORD=admin
 
 networks:
   monitoring:

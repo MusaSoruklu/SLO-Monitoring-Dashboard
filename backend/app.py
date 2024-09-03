@@ -8,6 +8,7 @@ from flask_cors import CORS
 from alpha_vantage.timeseries import TimeSeries
 from alpha_vantage.fundamentaldata import FundamentalData
 from flask_sqlalchemy import SQLAlchemy
+import os
 
 app = Flask(__name__)
 CORS(app)  # Allow all domains on all routes
@@ -15,13 +16,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///market_news.db'  # Example fo
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-
 # Prometheus metrics
 REQUEST_COUNT = Counter('request_count', 'Total number of requests')
 REQUEST_LATENCY = Summary('request_latency_seconds', 'Time spent processing request')
 ERROR_COUNT = Counter('error_count', 'Total number of errors')
 SUCCESS_COUNT = Counter('success_count', 'Total number of successful requests')
 TICKER_REQUEST_COUNT = Counter('ticker_request_count', 'Number of requests per ticker', ['ticker'])
+
+# Custom metrics
+MEMORY_RSS = Gauge('memory_rss_bytes', 'Resident Set Size Memory Usage')
+MEMORY_VMS = Gauge('memory_vms_bytes', 'Virtual Memory Size Usage')
+CPU_USAGE = Gauge('cpu_usage_percent', 'CPU Usage Percent')
 
 api_key = 'TJ59HNMX6SLPB9TQ'
 ts = TimeSeries(key=api_key)
@@ -81,22 +86,71 @@ def init_db_command():
 def metrics():
     return generate_latest()
 
+def update_system_metrics():
+    process = os.getpid()
+
+    # Attempt to get memory usage
+    try:
+        if os.name == 'posix':  # Unix-like system
+            # Use `/proc` filesystem to get memory usage on Linux
+            with open(f'/proc/{process}/status') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if 'VmRSS:' in line:
+                        rss = int(line.split()[1]) * 1024  # Convert KB to Bytes
+                        MEMORY_RSS.set(rss)
+                    elif 'VmSize:' in line:
+                        vms = int(line.split()[1]) * 1024  # Convert KB to Bytes
+                        MEMORY_VMS.set(vms)
+    except Exception as e:
+        print(f"Error fetching memory info: {e}")
+
+    # Get CPU usage, simpler method
+    try:
+        cpu_usage = os.getloadavg()[0] * 100  # Simple example using load average on Unix
+        CPU_USAGE.set(cpu_usage)
+    except Exception as e:
+        print(f"Error fetching CPU usage: {e}")
+
 @app.route('/stock/<ticker>', methods=['GET'])
 @REQUEST_LATENCY.time()
 def get_stock_price(ticker):
     REQUEST_COUNT.inc()
+    TICKER_REQUEST_COUNT.labels(ticker=ticker).inc()
+    update_system_metrics()  # Update system metrics at the start of the request
+
     try:
-        TICKER_REQUEST_COUNT.labels(ticker=ticker).inc()
         stock = yf.Ticker(ticker)
-        data = stock.history(period='1d')
-        if data.empty:
+        hist_data = stock.history(period='1mo')  # Fetch historical data for the last month
+
+        if (hist_data.empty):
             ERROR_COUNT.inc()
             return jsonify({"error": "Ticker not found"}), 404
-        closing_price = data['Close'][0]
+        
+        # Extracting closing prices, dates, and volume for the historical data
+        hist_prices = hist_data['Close'].tolist()
+        hist_dates = hist_data.index.strftime('%Y-%m-%d').tolist()
+        hist_volume = hist_data['Volume'].tolist()
+
+        # Fetch stock information
+        info = stock.info
+
+        # Get the most recent close price
+        closing_price = hist_prices[-1] if hist_prices else None
+
         SUCCESS_COUNT.inc()
+        update_system_metrics()  # Update metrics after processing
         return jsonify({
             "ticker": ticker,
-            "closing_price": closing_price
+            "current_price": closing_price,
+            "history": {
+                "dates": hist_dates,
+                "prices": hist_prices
+            },
+            "volume": hist_volume,  # Trading volume
+            "pe_ratio": info.get('trailingPE', 'N/A'),  # Price-to-earnings ratio
+            "market_cap": info.get('marketCap', 'N/A'),  # Market capitalization
+            "dividends": list(stock.dividends[-5:])  # Last 5 dividend payments
         })
     except Exception as e:
         ERROR_COUNT.inc()
@@ -106,6 +160,7 @@ def get_stock_price(ticker):
 @app.route('/top-stocks', methods=['GET'])
 def get_top_stocks():
     REQUEST_COUNT.inc()
+    update_system_metrics()  # Update system metrics at the start of the request
     tickers = "AAPL MSFT GOOGL AMZN META"  # Example tickers
     try:
         data = yf.download(tickers, period='1d')['Close']
@@ -114,6 +169,7 @@ def get_top_stocks():
             data.index = data.index.strftime('%Y-%m-%d')
         results = data.to_dict()
         SUCCESS_COUNT.inc()
+        update_system_metrics()  # Update metrics after processing
         return jsonify(results)
     except Exception as e:
         ERROR_COUNT.inc()
@@ -122,94 +178,15 @@ def get_top_stocks():
 @app.route('/top-stocks/historical', methods=['GET'])
 def get_historical_top_stocks():
     REQUEST_COUNT.inc()
+    update_system_metrics()  # Update system metrics at the start of the request
     tickers = "AAPL MSFT GOOGL AMZN META"  # Example tickers
     try:
         data = yf.download(tickers, period='6mo', group_by='ticker')
         formatted_data = {ticker: data[ticker]['Close'].dropna().tolist() for ticker in tickers.split()}
         dates = [date.strftime('%Y-%m-%d') for date in data.index]
         SUCCESS_COUNT.inc()
+        update_system_metrics()  # Update metrics after processing
         return jsonify({'data': formatted_data, 'dates': dates})
     except Exception as e:
         ERROR_COUNT.inc()
-        return jsonify({"error": str(e), "failed_tickers": []}), 500
-    
-@app.route('/revenue-trends/<ticker>', methods=['GET'])
-def get_revenue_trends(ticker):
-    try:
-        data, _ = fd.get_income_statement_annual(ticker)
-        if 'annualReports' in data:
-            revenue_data = [item['totalRevenue'] for item in data['annualReports']]
-            dates = [item['fiscalDateEnding'] for item in data['annualReports']]
-            return jsonify({"dates": dates, "revenue": revenue_data})
-        else:
-            return jsonify({"error": "No data found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
-@app.route('/market-news', methods=['GET'])
-def get_market_news():
-    # Retrieve query parameters
-    tickers = request.args.get('tickers', '').split(',') if request.args.get('tickers') else ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
-    time_from = request.args.get('time_from')
-    time_to = request.args.get('time_to')
-    sort = request.args.get('sort', 'LATEST')
-    limit = int(request.args.get('limit', '50'))
-
-    # Build query based on parameters
-    query = News.query
-    
-    if tickers[0]:  # Check if tickers list is not empty
-        query = query.filter(News.tickers.in_(tickers))
-    if time_from:
-        query = query.filter(News.posted_on >= datetime.strptime(time_from, '%Y-%m-%d'))
-    if time_to:
-        query = query.filter(News.posted_on <= datetime.strptime(time_to, '%Y-%m-%d'))
-    
-    # Sorting by date
-    if sort == 'LATEST':
-        query = query.order_by(News.posted_on.desc())
-    else:
-        query = query.order_by(News.posted_on)
-    
-    # Limiting results
-    news_list = query.limit(limit).all()
-
-    # Prepare response
-    results = [{
-        "title": news.title,
-        "content": news.content,  # Changed from 'summary' to 'content' to match the database schema
-        "posted_on": news.posted_on.strftime('%Y-%m-%d %H:%M:%S'),
-        "tickers": news.tickers
-    } for news in news_list]
-
-    return jsonify(results)
-    
-@app.route('/earnings-insights', methods=['GET'])
-def get_earnings_insights(ticker):
-    REQUEST_COUNT.inc()
-    try:
-        data, _ = fd.get_company_overview(ticker)
-        earnings_data = {
-            "EPS": data.get("EPS"),
-            "ProfitMargin": data.get("ProfitMargin"),
-            "OperatingMarginTTM": data.get("OperatingMarginTTM"),
-        }
-        SUCCESS_COUNT.inc()
-        return jsonify(earnings_data)
-    except Exception as e:
-        ERROR_COUNT.inc()
-        return jsonify({"error": str(e)}), 500
-    
-@app.route('/login', methods=['POST'])
-def login():
-    username = request.json['username']
-    password = request.json['password']
-    user = User.query.filter_by(username=username).first()
-    if user and user.password == password:
-        return jsonify({"message": "Login successful", "user": user.username}), 200
-    else:
-        return jsonify({"error": "Invalid credentials"}), 401
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
+        return jsonify({"error": str(e), "failed_tickers": []}),
