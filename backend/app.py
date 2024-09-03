@@ -44,26 +44,41 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
+    balance = db.Column(db.Float, nullable=False, default=2000000)  # Initialize with £2,000,000
 
     def __repr__(self):
         return f'<User {self.username}>'
     
+class Portfolio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Ensure foreign key is pointing to 'user.id'
+    user = db.relationship('User', backref=db.backref('portfolios', lazy=True))  # Set up relationship
+    ticker = db.Column(db.String(10), nullable=False)
+    purchase_price = db.Column(db.Float, nullable=False)
+    shares = db.Column(db.Integer, nullable=False)
+    purchase_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    def __repr__(self):
+        return f'<Portfolio {self.ticker}>'
+    
 @app.cli.command('init-db')
 def init_db_command():
-    """Initialize the database and seed it with default user and news data if they don't exist."""
-    db.create_all()  # This will not affect existing tables and data
-    print('Checked and ensured all tables are created.')
+    """Drops existing tables, recreates them, and seeds with default data."""
+    db.drop_all()  # Drop all tables
+    db.create_all()  # Create all necessary tables based on the model definitions
+    print('All tables dropped and recreated.')
 
-    # Check if default user exists
-    if User.query.filter_by(username='admin').first() is None:
-        default_user = User(username='admin', password='admin')  # Note: Plain text password is not secure
+    # Creating and checking for default user
+    default_user = User.query.filter_by(username='admin').first()
+    if not default_user:
+        # Creating the default admin user with a specified balance
+        default_user = User(username='admin', password='admin', balance=2000000)  # Initializing with £2,000,000
         db.session.add(default_user)
         db.session.commit()
-        print('Added default admin user.')
+        print('Added default admin user with initial balance of £2,000,000.')
 
-    # Check if there are any news entries
+    # Check and add sample news entries
     if News.query.count() == 0:
-        # Sample news data
         news_samples = [
             {"title": "Tesla Surpasses Market Expectations", "content": "Tesla's latest earnings report shows a surprising increase in profits, surpassing Wall Street predictions.", "tickers": "TSLA", "posted_on": datetime(2024, 8, 30, 14, 30)},
             {"title": "Apple Unveils New Product Line", "content": "Apple has announced a new line of innovative products scheduled to be released next quarter.", "tickers": "AAPL", "posted_on": datetime(2024, 8, 30, 15, 0)},
@@ -76,6 +91,33 @@ def init_db_command():
             db.session.add(new_news)
         db.session.commit()
         print('Added sample news stories to the database.')
+
+    # Seed the portfolio if not already present
+    portfolio_data = [
+        {'ticker': 'AAPL', 'purchase_price': 150.0, 'shares': 2000},
+        {'ticker': 'MSFT', 'purchase_price': 250.0, 'shares': 1200},
+        {'ticker': 'GOOGL', 'purchase_price': 2800.0, 'shares': 340},
+        {'ticker': 'AMZN', 'purchase_price': 3100.0, 'shares': 300},
+        {'ticker': 'FB', 'purchase_price': 270.0, 'shares': 1500},
+        {'ticker': 'TSLA', 'purchase_price': 800.0, 'shares': 1250},
+        {'ticker': 'NFLX', 'purchase_price': 500.0, 'shares': 800},
+        {'ticker': 'INTC', 'purchase_price': 50.0, 'shares': 5000},
+        {'ticker': 'CSCO', 'purchase_price': 45.0, 'shares': 2200},
+        {'ticker': 'ORCL', 'purchase_price': 60.0, 'shares': 1700},
+        {'ticker': 'IBM', 'purchase_price': 130.0, 'shares': 900},
+        {'ticker': 'NVDA', 'purchase_price': 500.0, 'shares': 800},
+        {'ticker': 'PYPL', 'purchase_price': 180.0, 'shares': 1100},
+        {'ticker': 'ADBE', 'purchase_price': 470.0, 'shares': 600},
+        {'ticker': 'BABA', 'purchase_price': 220.0, 'shares': 1400}
+    ]
+    for entry in portfolio_data:
+        new_stock = Portfolio(ticker=entry['ticker'], purchase_price=entry['purchase_price'], shares=entry['shares'], user_id=default_user.id)  # Set user_id to the default user's id
+        db.session.add(new_stock)
+    db.session.commit()
+    print('Completed database initialization with all sample data.')
+
+
+
 
 @app.route('/metrics')
 def metrics():
@@ -229,7 +271,140 @@ def login():
         return jsonify({"message": "Login successful", "user": user.username}), 200
     else:
         return jsonify({"error": "Invalid credentials"}), 401
+    
+@app.route('/portfolio', methods=['GET'])
+def get_portfolio():
+    portfolio_items = Portfolio.query.all()
+    results = []
+    for item in portfolio_items:
+        stock = yf.Ticker(item.ticker)
+        current_data = stock.history(period='1d')
+        current_price = current_data['Close'].iloc[-1] if not current_data.empty else None
+        if current_price:
+            purchase_value = item.purchase_price * item.shares
+            current_value = current_price * item.shares
+            profit = current_value - purchase_value
+            profit_percent = (profit / purchase_value) * 100
+            results.append({
+                "ticker": item.ticker,
+                "shares": item.shares,
+                "purchase_price": item.purchase_price,
+                "current_price": current_price,
+                "profit": profit,
+                "profit_percent": profit_percent
+            })
+    return jsonify(results)
 
+
+@app.route('/balance/<string:username>', methods=['GET'])
+def get_balance(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return jsonify({"balance": user.balance}), 200
+    else:
+        return jsonify({"error": "User not found"}), 404
+    
+@app.route('/ticker-suggestions/<query>', methods=['GET'])
+def get_ticker_suggestions(query):
+    # Example static list of tickers, ideally, this could be dynamic or from the database
+    all_tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'FB', 'NFLX', 'INTC', 'CSCO', 'ORCL', 'IBM', 'NVDA', 'PYPL', 'ADBE', 'BABA']
+    suggestions = [ticker for ticker in all_tickers if ticker.lower().startswith(query.lower())]
+    return jsonify(suggestions)
+
+@app.route('/stock-info/<ticker>', methods=['GET'])
+def get_stock_info(ticker):
+    # Directly querying for the admin user from the database
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        return jsonify({"error": "Admin user not found"}), 404
+
+    stock = yf.Ticker(ticker)
+    current_data = stock.history(period='1d')
+    current_price = current_data['Close'].iloc[-1] if not current_data.empty else None
+
+    if current_price is None:
+        return jsonify({"error": "Could not fetch current price for the ticker."}), 404
+
+    # Using the admin user's ID to filter the portfolio
+    portfolio_entry = Portfolio.query.filter_by(ticker=ticker, user_id=admin_user.id).first()
+    shares_owned = portfolio_entry.shares if portfolio_entry else 0
+
+    return jsonify({
+        "currentPrice": float(current_price),
+        "sharesOwned": shares_owned
+    })
+    
+@app.route('/buy', methods=['POST'])
+def buy_stock():
+    data = request.get_json()
+    ticker = data.get('ticker')
+    shares_to_buy = int(data.get('shares'))
+
+    # Directly querying for the admin user from the database
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        return jsonify({"error": "Admin user not found"}), 404
+
+    stock = yf.Ticker(ticker)
+    current_data = stock.history(period='1d')
+    current_price = current_data['Close'].iloc[-1] if not current_data.empty else None
+    if not current_price:
+        return jsonify({"error": "Failed to get current stock price"}), 404
+
+    total_cost = shares_to_buy * current_price
+    if admin_user.balance < total_cost:
+        return jsonify({"error": "Insufficient balance"}), 400
+
+    admin_user.balance -= total_cost
+    portfolio_entry = Portfolio.query.filter_by(ticker=ticker, user_id=admin_user.id).first()
+    if portfolio_entry:
+        portfolio_entry.shares += shares_to_buy
+    else:
+        db.session.add(Portfolio(ticker=ticker, purchase_price=current_price, shares=shares_to_buy, user_id=admin_user.id))
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Purchase successful", "new_balance": admin_user.balance}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/sell', methods=['POST'])
+def sell_stock():
+    data = request.get_json()
+    ticker = data.get('ticker')
+    shares_to_sell = int(data.get('shares'))
+
+    # Directly querying for the admin user from the database
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        return jsonify({"error": "Admin user not found"}), 404
+
+    stock = yf.Ticker(ticker)
+    current_data = stock.history(period='1d')
+    current_price = current_data['Close'].iloc[-1] if not current_data.empty else None
+    if not current_price:
+        return jsonify({"error": "Failed to get current stock price"}), 404
+
+    portfolio_entry = Portfolio.query.filter_by(ticker=ticker, user_id=admin_user.id).first()
+    if not portfolio_entry or portfolio_entry.shares < shares_to_sell:
+        return jsonify({"error": "Not enough shares in portfolio"}), 400
+
+    total_revenue = shares_to_sell * current_price
+    admin_user.balance += total_revenue
+
+    if portfolio_entry.shares > shares_to_sell:
+        portfolio_entry.shares -= shares_to_sell
+    else:
+        db.session.delete(portfolio_entry)
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Sale successful", "new_balance": admin_user.balance}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
