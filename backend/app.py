@@ -40,6 +40,14 @@ class News(db.Model):
     def __repr__(self):
         return f'<News {self.title}>'
     
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(80), nullable=False)
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+    
 @app.cli.command('init-db')
 def init_db_command():
     """Clear existing data, create new tables, and seed the database with fake news."""
@@ -216,6 +224,16 @@ def get_earnings_insights(ticker):
     except Exception as e:
         ERROR_COUNT.inc()
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json['username']
+    password = request.json['password']
+    user = User.query.filter_by(username=username).first()
+    if user and user.password == password:
+        return jsonify({"message": "Login successful", "user": user.username}), 200
+    else:
+        return jsonify({"error": "Invalid credentials"}), 401
 
 
 if __name__ == '__main__':

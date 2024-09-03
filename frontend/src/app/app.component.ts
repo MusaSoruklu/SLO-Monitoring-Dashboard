@@ -38,6 +38,11 @@ Chart.register(
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, AfterViewInit {
+  isLoggedIn = false; // This should be updated based on your authentication logic
+  showLoginDialog = false;
+  loginUsername: string = '';
+  loginPassword: string = '';
+
   @ViewChild('stockChart') stockChart!: ElementRef<HTMLCanvasElement>;
   @ViewChild('revenueChart') revenueChart!: ElementRef<HTMLCanvasElement>;
   @ViewChild('earningsChart') earningsChart!: ElementRef<HTMLCanvasElement>;
@@ -212,6 +217,38 @@ export class AppComponent implements OnInit, AfterViewInit {
   handleError(error: any) {
     console.error('An error occurred:', error);
     this.error = 'Failed to load data. Please try again later.';
+  }
+
+  openLoginDialog(): void {
+    this.showLoginDialog = true;
+  }
+
+  closeLoginDialog(): void {
+    this.showLoginDialog = false;
+  }
+
+  submitLogin(): void {
+    this.financeService.login(this.loginUsername, this.loginPassword).subscribe({
+      next: (response) => {
+        console.log('Login successful', response);
+        this.closeLoginDialog();
+        // Additional logic for successful login
+      },
+      error: (error) => {
+        console.error('Login failed', error);
+        // Handle login failure
+      }
+    });
+  }
+
+  openPortfolioDialog(): void {
+    // Logic to open the portfolio dialog
+    console.log('Opening portfolio dialog...');
+  }
+
+  openTradeDialog(): void {
+    // Logic to open the trading dialog
+    console.log('Opening trade dialog...');
   }
 
   toggleTheme(): void {

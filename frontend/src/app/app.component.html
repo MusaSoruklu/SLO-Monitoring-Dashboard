@@ -13,18 +13,39 @@
   <section class="hero is-dark is-bold is-small">
     <div class="hero-body">
       <div class="container">
-        <div class="columns">
+        <div class="columns is-mobile is-vcentered">
           <div class="column is-8">
             <h1 class="title">Finance Dashboard</h1>
             <h2 class="subtitle">Monitor key financial metrics</h2>
           </div>
-          <div class="column is-4 has-text-right">
-            <button class="button is-light" (click)="toggleTheme()">Toggle Theme</button>
+          <div class="column is-4">
+            <div class="buttons has-addons is-right">
+              <button class="button is-light" *ngIf="!isLoggedIn" (click)="openLoginDialog()">
+                <span class="icon">
+                  <i class="fas fa-sign-in-alt"></i>
+                </span>
+                <span>Login</span>
+              </button>
+              <button class="button is-light mr-3" (click)="toggleTheme()">
+                <span class="icon">
+                  <i class="fas fa-adjust"></i>
+                </span>
+                <span>Toggle Theme</span>
+            </button>
+
+              <!-- Portfolio Button (visible only if the user is logged in) -->
+              <button class="button is-primary" *ngIf="isLoggedIn" (click)="openPortfolioDialog()">Portfolio</button>
+
+              <!-- Buy/Sell Shares Button (visible only if the user is logged in) -->
+              <button class="button is-success" *ngIf="isLoggedIn" (click)="openTradeDialog()">Trade Shares</button>
+
+
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </section>  
+  </section>
 
   <div class="container mt-5">
     <div class="columns">
@@ -94,6 +115,36 @@
             </article>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showLoginDialog">
+    <div class="modal is-active">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Login</p>
+          <button class="delete" aria-label="close" (click)="closeLoginDialog()"></button>
+        </header>
+        <section class="modal-card-body">
+          <div class="field">
+            <label class="label">Username</label>
+            <div class="control">
+              <input class="input" type="text" [(ngModel)]="loginUsername" placeholder="Username">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Password</label>
+            <div class="control">
+              <input class="input" type="password" [(ngModel)]="loginPassword" placeholder="Password">
+            </div>
+          </div>
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button is-success" (click)="submitLogin()">Login</button>
+          <button class="button" (click)="closeLoginDialog()">Cancel</button>
+        </footer>
       </div>
     </div>
   </div>

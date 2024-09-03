@@ -1,3 +1,44 @@
 *.pem
 *.venv
-.angular
+*.angular
+
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+frontend/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+frontend/.angular/cache/16.2.14/angular-webpack/96ad6d91005cb14f579f1294de9d69ed71e50b5a/7.pack
+frontend/.angular/cache/16.2.14/angular-webpack/96ad6d91005cb14f579f1294de9d69ed71e50b5a/12.pack

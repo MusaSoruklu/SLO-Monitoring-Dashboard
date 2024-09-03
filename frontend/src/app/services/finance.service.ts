@@ -38,6 +38,10 @@ export class FinanceService {
   getMarketNews(): Observable<any> {
     return this.http.get(`http://localhost:5000/market-news`);
   }
+
+  login(username: string, password: string) {
+    return this.http.post('/login', { username, password });
+  }
 }
 
 export interface StockData {
