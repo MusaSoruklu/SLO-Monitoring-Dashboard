@@ -85,18 +85,31 @@ def metrics():
 @REQUEST_LATENCY.time()
 def get_stock_price(ticker):
     REQUEST_COUNT.inc()
+    TICKER_REQUEST_COUNT.labels(ticker=ticker).inc()
     try:
-        TICKER_REQUEST_COUNT.labels(ticker=ticker).inc()
         stock = yf.Ticker(ticker)
-        data = stock.history(period='1d')
-        if data.empty:
+        # Fetch historical data for the last month
+        hist_data = stock.history(period='1mo')
+        
+        if hist_data.empty:
             ERROR_COUNT.inc()
             return jsonify({"error": "Ticker not found"}), 404
-        closing_price = data['Close'][0]
+        
+        # Extracting closing prices and dates for the historical data
+        hist_prices = hist_data['Close'].tolist()
+        hist_dates = hist_data.index.strftime('%Y-%m-%d').tolist()
+
+        # Get the most recent close price
+        closing_price = hist_prices[-1] if hist_prices else None
+
         SUCCESS_COUNT.inc()
         return jsonify({
             "ticker": ticker,
-            "closing_price": closing_price
+            "current_price": closing_price,
+            "history": {
+                "dates": hist_dates,
+                "prices": hist_prices
+            }
         })
     except Exception as e:
         ERROR_COUNT.inc()

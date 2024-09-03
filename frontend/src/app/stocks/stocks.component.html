@@ -1,1 +1,26 @@
-<p>stocks works!</p>
+<div class="section">
+    <div class="container">
+      <h1 class="title">Stock Search</h1>
+      <div class="field">
+        <label class="label">Enter Stock Ticker:</label>
+        <div class="control has-icons-left has-icons-right">
+          <input class="input is-success" type="text" placeholder="e.g., AAPL" [(ngModel)]="ticker">
+          <span class="icon is-small is-left">
+            <i class="fas fa-search"></i>
+          </span>
+        </div>
+      </div>
+      <button class="button is-info" (click)="fetchStockData()">Search</button>
+    </div>
+    <div *ngIf="stockData">
+      <div class="box">
+        <h2 class="title">Current Price: {{ stockData.currentPrice | currency }}</h2>
+        <h3 class="subtitle">% Change: {{ stockData.changePercent }}</h3>
+        <!-- More details can be added here -->
+      </div>
+      <div>
+        <canvas #stockChart></canvas>
+      </div>
+    </div>
+  </div>
+  

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
   <script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script>
 </head>
+
 <body>
   <section class="hero is-dark is-bold is-small">
     <div class="hero-body">
@@ -50,14 +52,18 @@
           <!-- Side Navigation -->
           <p class="menu-label has-text-white">General</p>
           <ul class="menu-list">
-            <li><a routerLink="/dashboard" routerLinkActive="is-active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a routerLink="/dashboard" routerLinkActive="is-active"><i class="fas fa-tachometer-alt"></i>
+                Dashboard</a></li>
             <li><a routerLink="/stocks" routerLinkActive="is-active"><i class="fas fa-chart-line"></i> Stocks</a></li>
-            <li *ngIf="isLoggedIn"><a routerLink="/portfolio" routerLinkActive="is-active"><i class="fas fa-briefcase"></i> Portfolio</a></li>
-            <li *ngIf="isLoggedIn"><a routerLink="/trade-shares" routerLinkActive="is-active"><i class="fas fa-exchange-alt"></i> Trade Shares</a></li>
+            <li *ngIf="isLoggedIn"><a routerLink="/portfolio" routerLinkActive="is-active"><i
+                  class="fas fa-briefcase"></i> Portfolio</a></li>
+            <li *ngIf="isLoggedIn"><a routerLink="/trade-shares" routerLinkActive="is-active"><i
+                  class="fas fa-exchange-alt"></i> Trade Shares</a></li>
           </ul>
           <p class="menu-label has-text-white">Administration</p>
           <ul class="menu-list">
-            <li><a routerLink="/team-settings" routerLinkActive="is-active"><i class="fas fa-cogs"></i> Team Settings</a></li>
+            <li><a routerLink="/team-settings" routerLinkActive="is-active"><i class="fas fa-cogs"></i> Team
+                Settings</a></li>
           </ul>
         </aside>
       </div>
@@ -67,5 +73,36 @@
       </div>
     </div>
   </div>
+
+  <div *ngIf="showLoginDialog">
+    <div class="modal is-active">
+      <div class="modal-background" (click)="closeLoginDialog()"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Login</p>
+          <button class="delete" aria-label="close" (click)="closeLoginDialog()"></button>
+        </header>
+        <section class="modal-card-body">
+          <div class="field">
+            <label class="label">Username</label>
+            <div class="control">
+              <input class="input" type="text" #usernameInput [(ngModel)]="loginUsername" placeholder="Username">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Password</label>
+            <div class="control">
+              <input class="input" type="password" [(ngModel)]="loginPassword" placeholder="Password">
+            </div>
+          </div>
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button is-success" (click)="submitLogin()">Login</button>
+          <button class="button" (click)="closeLoginDialog()">Cancel</button>
+        </footer>
+      </div>
+    </div>
+  </div>
 </body>
+
 </html>
