@@ -88,16 +88,19 @@ def get_stock_price(ticker):
     TICKER_REQUEST_COUNT.labels(ticker=ticker).inc()
     try:
         stock = yf.Ticker(ticker)
-        # Fetch historical data for the last month
-        hist_data = stock.history(period='1mo')
-        
+        hist_data = stock.history(period='1mo')  # Fetch historical data for the last month
+
         if hist_data.empty:
             ERROR_COUNT.inc()
             return jsonify({"error": "Ticker not found"}), 404
         
-        # Extracting closing prices and dates for the historical data
+        # Extracting closing prices, dates, and volume for the historical data
         hist_prices = hist_data['Close'].tolist()
         hist_dates = hist_data.index.strftime('%Y-%m-%d').tolist()
+        hist_volume = hist_data['Volume'].tolist()
+
+        # Fetch stock information
+        info = stock.info
 
         # Get the most recent close price
         closing_price = hist_prices[-1] if hist_prices else None
@@ -109,7 +112,11 @@ def get_stock_price(ticker):
             "history": {
                 "dates": hist_dates,
                 "prices": hist_prices
-            }
+            },
+            "volume": hist_volume,  # Trading volume
+            "pe_ratio": info.get('trailingPE', 'N/A'),  # Price-to-earnings ratio
+            "market_cap": info.get('marketCap', 'N/A'),  # Market capitalization
+            "dividends": list(stock.dividends[-5:])  # Last 5 dividend payments
         })
     except Exception as e:
         ERROR_COUNT.inc()

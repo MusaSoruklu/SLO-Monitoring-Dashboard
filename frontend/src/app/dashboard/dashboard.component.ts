@@ -24,7 +24,7 @@ export class DashboardComponent {
   @ViewChild('revenueChart') revenueChart!: ElementRef<HTMLCanvasElement>;
   @ViewChild('earningsChart') earningsChart!: ElementRef<HTMLCanvasElement>;
   chart!: Chart;
-  
+
   constructor(private financeService: FinanceService) { }
 
   ngOnInit() {
@@ -39,21 +39,6 @@ export class DashboardComponent {
   initCharts(): void {
     this.initRevenueChart();
     this.initEarningsChart();
-  }
-
-  changeChart(type: ChartType) {
-    if (!this.stockData) {
-      return; // Guard clause if there's no data
-    }
-    this.initChart(type, {
-      labels: Object.keys(this.stockData), // Adjust accordingly
-      datasets: [{
-        data: Object.values(this.stockData), // Adjust accordingly
-        label: "Stock Performance",
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1
-      }]
-    });
   }
 
   initChart(type: keyof ChartTypeRegistry, data: ChartConfiguration['data']) {
@@ -156,20 +141,6 @@ export class DashboardComponent {
       color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
-  }
-
-  searchTicker(ticker: string) {
-    this.financeService.getStockPrice(ticker).subscribe({
-      next: (data) => {
-        console.log('Stock Data:', data);
-        this.error = null;
-      },
-      error: (err) => {
-        this.error = "Failed to fetch data for ticker: " + ticker;
-        console.error(err);
-        this.stockData = null;
-      }
-    });
   }
 
   fetchMarketNews() {

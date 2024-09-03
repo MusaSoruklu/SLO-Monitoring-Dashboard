@@ -1,26 +1,31 @@
 <div class="section">
     <div class="container">
-      <h1 class="title">Stock Search</h1>
-      <div class="field">
-        <label class="label">Enter Stock Ticker:</label>
-        <div class="control has-icons-left has-icons-right">
-          <input class="input is-success" type="text" placeholder="e.g., AAPL" [(ngModel)]="ticker">
-          <span class="icon is-small is-left">
-            <i class="fas fa-search"></i>
-          </span>
+        <h1 class="title">Stock Search</h1>
+        <div class="field">
+            <label class="label">Enter Stock Ticker:</label>
+            <div class="control has-icons-left has-icons-right">
+                <input class="input is-success" type="text" placeholder="e.g., AAPL" [(ngModel)]="ticker">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-search"></i>
+                </span>
+            </div>
         </div>
-      </div>
-      <button class="button is-info" (click)="fetchStockData()">Search</button>
+        <button class="button is-info" (click)="fetchStockData()">Search</button>
     </div>
-    <div *ngIf="stockData">
-      <div class="box">
-        <h2 class="title">Current Price: {{ stockData.currentPrice | currency }}</h2>
-        <h3 class="subtitle">% Change: {{ stockData.changePercent }}</h3>
-        <!-- More details can be added here -->
-      </div>
-      <div>
-        <canvas #stockChart></canvas>
-      </div>
+    <canvas #stockChart></canvas>
+    <div>
+        <div class="box">
+            <h2 class="title">Current Price: {{ currentPrice | currency:'USD' }}</h2>
+            <h3 class="subtitle">% Change: {{ changePercent | number:'1.2-2':'en-US' }}%</h3>
+            <p>Market Cap: {{ stockData?.market_cap | currency:'USD':'symbol':'1.0-0' }}</p>
+            <p>P/E Ratio: {{ stockData?.pe_ratio }}</p>
+            <p>Volume: {{ averageVolume | number }}</p>
+            <div *ngIf="stockData?.dividends?.length">
+                <h4>Recent Dividends:</h4>
+                <ul>
+                    <li *ngFor="let dividend of stockData.dividends">{{ dividend | currency:'USD' }}</li>
+                </ul>
+            </div>
+        </div>
     </div>
-  </div>
-  
+</div>
