@@ -1,0 +1,55 @@
+      
+      <div class="column">
+        <div class="columns">
+          <div class="column is-two-thirds">
+            <div class="box has-background-grey-dark">
+              <div *ngIf="stockData" class="notification is-primary">
+                <h2 class="subtitle">Stock Price: {{ stockData.closing_price | number:'1.2-2' }}</h2>
+              </div>
+              <div *ngIf="error" class="notification is-danger">
+                <h2 class="subtitle">{{ error }}</h2>
+              </div>
+              <canvas #stockChart width="800" height="400"></canvas>
+            </div>
+            <div class="column">
+              <article class="panel is-warning">
+                <p class="panel-heading">Earnings Insights</p>
+                <div class="panel-block">
+                  <canvas #earningsChart width="400" height="200"></canvas>
+                </div>
+              </article>
+            </div>
+          </div>
+          <div class="column">
+            <article class="panel is-danger">
+              <p class="panel-heading">
+                Market News
+              </p>
+              <div class="panel-block" *ngFor="let news of marketNews">
+                <article class="media">
+                  <div class="media-content">
+                    <div class="content">
+                      <p class="news-title">{{ news.title }}</p>
+                      <p class="news-content">{{ news.content }}</p>
+                      <p class="news-meta">
+                        <span class="news-ticker">Ticker: {{ news.tickers }}</span> |
+                        <span class="news-date">Posted: {{ news.posted_on }}</span>
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </article>
+          </div>
+        </div>
+        <div class="columns">
+          <div class="column">
+            <article class="panel is-info">
+              <p class="panel-heading">Revenue Trends</p>
+              <div class="panel-block">
+                <canvas #revenueChart width="400" height="200"></canvas>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>

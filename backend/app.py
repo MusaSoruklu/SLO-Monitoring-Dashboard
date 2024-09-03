@@ -50,57 +50,32 @@ class User(db.Model):
     
 @app.cli.command('init-db')
 def init_db_command():
-    """Clear existing data, create new tables, and seed the database with fake news."""
-    db.drop_all()
-    db.create_all()
-    print('Initialized the database.')
+    """Initialize the database and seed it with default user and news data if they don't exist."""
+    db.create_all()  # This will not affect existing tables and data
+    print('Checked and ensured all tables are created.')
 
-    # Sample news data
-    news_samples = [
-        {
-            "title": "Tesla Surpasses Market Expectations",
-            "content": "Tesla's latest earnings report shows a surprising increase in profits, surpassing Wall Street predictions.",
-            "tickers": "TSLA",
-            "posted_on": datetime(2024, 8, 30, 14, 30)
-        },
-        {
-            "title": "Apple Unveils New Product Line",
-            "content": "Apple has announced a new line of innovative products scheduled to be released next quarter.",
-            "tickers": "AAPL",
-            "posted_on": datetime(2024, 8, 30, 15, 0)
-        },
-        {
-            "title": "Amazon Expands to New Markets",
-            "content": "Amazon declares its expansion into new international markets, aiming to double its global footprint.",
-            "tickers": "AMZN",
-            "posted_on": datetime(2024, 8, 30, 16, 0)
-        },
-        {
-            "title": "Microsoft Acquires AI Startup",
-            "content": "Microsoft has acquired an AI startup to enhance its cloud computing capabilities.",
-            "tickers": "MSFT",
-            "posted_on": datetime(2024, 8, 30, 17, 0)
-        },
-        {
-            "title": "Google Faces Antitrust Investigation",
-            "content": "Google is under scrutiny as new antitrust investigations seek to explore its business practices.",
-            "tickers": "GOOGL",
-            "posted_on": datetime(2024, 8, 30, 18, 0)
-        }
-    ]
+    # Check if default user exists
+    if User.query.filter_by(username='admin').first() is None:
+        default_user = User(username='admin', password='admin')  # Note: Plain text password is not secure
+        db.session.add(default_user)
+        db.session.commit()
+        print('Added default admin user.')
 
-    # Add news samples to the database
-    for news in news_samples:
-        new_news = News(
-            title=news['title'],
-            content=news['content'],
-            tickers=news['tickers'],
-            posted_on=news['posted_on']
-        )
-        db.session.add(new_news)
-
-    db.session.commit()
-    print('Added sample news stories to the database.')
+    # Check if there are any news entries
+    if News.query.count() == 0:
+        # Sample news data
+        news_samples = [
+            {"title": "Tesla Surpasses Market Expectations", "content": "Tesla's latest earnings report shows a surprising increase in profits, surpassing Wall Street predictions.", "tickers": "TSLA", "posted_on": datetime(2024, 8, 30, 14, 30)},
+            {"title": "Apple Unveils New Product Line", "content": "Apple has announced a new line of innovative products scheduled to be released next quarter.", "tickers": "AAPL", "posted_on": datetime(2024, 8, 30, 15, 0)},
+            {"title": "Amazon Expands to New Markets", "content": "Amazon declares its expansion into new international markets, aiming to double its global footprint.", "tickers": "AMZN", "posted_on": datetime(2024, 8, 30, 16, 0)},
+            {"title": "Microsoft Acquires AI Startup", "content": "Microsoft has acquired an AI startup to enhance its cloud computing capabilities.", "tickers": "MSFT", "posted_on": datetime(2024, 8, 30, 17, 0)},
+            {"title": "Google Faces Antitrust Investigation", "content": "Google is under scrutiny as new antitrust investigations seek to explore its business practices.", "tickers": "GOOGL", "posted_on": datetime(2024, 8, 30, 18, 0)}
+        ]
+        for news in news_samples:
+            new_news = News(title=news['title'], content=news['content'], tickers=news['tickers'], posted_on=news['posted_on'])
+            db.session.add(new_news)
+        db.session.commit()
+        print('Added sample news stories to the database.')
 
 @app.route('/metrics')
 def metrics():

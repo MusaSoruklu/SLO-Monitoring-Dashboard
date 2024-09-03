@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +7,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
   <script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script>
 </head>
-
 <body>
   <section class="hero is-dark is-bold is-small">
     <div class="hero-body">
@@ -19,27 +17,25 @@
             <h2 class="subtitle">Monitor key financial metrics</h2>
           </div>
           <div class="column is-4">
-            <div class="buttons has-addons is-right">
+            <div class="buttons is-right">
               <button class="button is-light" *ngIf="!isLoggedIn" (click)="openLoginDialog()">
                 <span class="icon">
                   <i class="fas fa-sign-in-alt"></i>
                 </span>
                 <span>Login</span>
               </button>
-              <button class="button is-light mr-3" (click)="toggleTheme()">
+              <button class="button is-light" *ngIf="isLoggedIn" (click)="logout()">
+                <span class="icon">
+                  <i class="fas fa-sign-out-alt"></i>
+                </span>
+                <span>Logout</span>
+              </button>
+              <button class="button is-light" (click)="toggleTheme()">
                 <span class="icon">
                   <i class="fas fa-adjust"></i>
                 </span>
                 <span>Toggle Theme</span>
-            </button>
-
-              <!-- Portfolio Button (visible only if the user is logged in) -->
-              <button class="button is-primary" *ngIf="isLoggedIn" (click)="openPortfolioDialog()">Portfolio</button>
-
-              <!-- Buy/Sell Shares Button (visible only if the user is logged in) -->
-              <button class="button is-success" *ngIf="isLoggedIn" (click)="openTradeDialog()">Trade Shares</button>
-
-
+              </button>
             </div>
           </div>
         </div>
@@ -51,103 +47,25 @@
     <div class="columns">
       <div class="column is-one-fifth">
         <aside class="menu">
+          <!-- Side Navigation -->
           <p class="menu-label has-text-white">General</p>
           <ul class="menu-list">
-            <li><a>Dashboard</a></li>
-            <li><a>Stocks</a></li>
+            <li><a routerLink="/dashboard" routerLinkActive="is-active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a routerLink="/stocks" routerLinkActive="is-active"><i class="fas fa-chart-line"></i> Stocks</a></li>
+            <li *ngIf="isLoggedIn"><a routerLink="/portfolio" routerLinkActive="is-active"><i class="fas fa-briefcase"></i> Portfolio</a></li>
+            <li *ngIf="isLoggedIn"><a routerLink="/trade-shares" routerLinkActive="is-active"><i class="fas fa-exchange-alt"></i> Trade Shares</a></li>
           </ul>
           <p class="menu-label has-text-white">Administration</p>
           <ul class="menu-list">
-            <li><a>Team Settings</a></li>
+            <li><a routerLink="/team-settings" routerLinkActive="is-active"><i class="fas fa-cogs"></i> Team Settings</a></li>
           </ul>
         </aside>
       </div>
-      <div class="column">
-        <div class="columns">
-          <div class="column is-two-thirds">
-            <div class="box has-background-grey-dark">
-              <div *ngIf="stockData" class="notification is-primary">
-                <h2 class="subtitle">Stock Price: {{ stockData.closing_price | number:'1.2-2' }}</h2>
-              </div>
-              <div *ngIf="error" class="notification is-danger">
-                <h2 class="subtitle">{{ error }}</h2>
-              </div>
-              <canvas #stockChart width="800" height="400"></canvas>
-            </div>
-            <div class="column">
-              <article class="panel is-warning">
-                <p class="panel-heading">Earnings Insights</p>
-                <div class="panel-block">
-                  <canvas #earningsChart width="400" height="200"></canvas>
-                </div>
-              </article>
-            </div>
-          </div>
-          <div class="column">
-            <article class="panel is-danger">
-              <p class="panel-heading">
-                Market News
-              </p>
-              <div class="panel-block" *ngFor="let news of marketNews">
-                <article class="media">
-                  <div class="media-content">
-                    <div class="content">
-                      <p class="news-title">{{ news.title }}</p>
-                      <p class="news-content">{{ news.content }}</p>
-                      <p class="news-meta">
-                        <span class="news-ticker">Ticker: {{ news.tickers }}</span> |
-                        <span class="news-date">Posted: {{ news.posted_on }}</span>
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              </div>
-            </article>
-          </div>
-        </div>
-        <div class="columns">
-          <div class="column">
-            <article class="panel is-info">
-              <p class="panel-heading">Revenue Trends</p>
-              <div class="panel-block">
-                <canvas #revenueChart width="400" height="200"></canvas>
-              </div>
-            </article>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div *ngIf="showLoginDialog">
-    <div class="modal is-active">
-      <div class="modal-background"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <p class="modal-card-title">Login</p>
-          <button class="delete" aria-label="close" (click)="closeLoginDialog()"></button>
-        </header>
-        <section class="modal-card-body">
-          <div class="field">
-            <label class="label">Username</label>
-            <div class="control">
-              <input class="input" type="text" [(ngModel)]="loginUsername" placeholder="Username">
-            </div>
-          </div>
-          <div class="field">
-            <label class="label">Password</label>
-            <div class="control">
-              <input class="input" type="password" [(ngModel)]="loginPassword" placeholder="Password">
-            </div>
-          </div>
-        </section>
-        <footer class="modal-card-foot">
-          <button class="button is-success" (click)="submitLogin()">Login</button>
-          <button class="button" (click)="closeLoginDialog()">Cancel</button>
-        </footer>
+      <div class="column is-three-quarters">
+        <!-- Route-specific content will be rendered here -->
+        <router-outlet></router-outlet>
       </div>
     </div>
   </div>
 </body>
-
 </html>

@@ -40,7 +40,7 @@ export class FinanceService {
   }
 
   login(username: string, password: string) {
-    return this.http.post('/login', { username, password });
+    return this.http.post('http://localhost:5000/login', { username, password });
   }
 }
 
