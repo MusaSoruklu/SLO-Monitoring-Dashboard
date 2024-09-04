@@ -27,6 +27,9 @@ FROM nginx:alpine
 # Copy the built Angular application from the build stage
 COPY --from=build /app/dist/slo-monitoring-dashboard-frontend /usr/share/nginx/html
 
+# Copy the custom Nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
 # Expose port 80
 EXPOSE 80
 
