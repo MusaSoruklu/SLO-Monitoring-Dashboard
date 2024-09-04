@@ -9,6 +9,7 @@ from alpha_vantage.timeseries import TimeSeries
 from alpha_vantage.fundamentaldata import FundamentalData
 from flask_sqlalchemy import SQLAlchemy
 import os
+import psutil
 
 app = Flask(__name__)
 CORS(app)  # Allow all domains on all routes
@@ -89,7 +90,7 @@ def metrics():
 def update_system_metrics():
     process = os.getpid()
 
-    # Attempt to get memory usage
+    # Attempt to get memory usage for linux
     try:
         if os.name == 'posix':  # Unix-like system
             # Use `/proc` filesystem to get memory usage on Linux
@@ -102,6 +103,14 @@ def update_system_metrics():
                     elif 'VmSize:' in line:
                         vms = int(line.split()[1]) * 1024  # Convert KB to Bytes
                         MEMORY_VMS.set(vms)
+          # For Windows
+        elif os.name == 'nt':
+            process = psutil.Process(process)
+            rss = process.memory_info().rss  # In bytes
+            vms = process.memory_info().vms  # In bytes
+            MEMORY_RSS.set(rss)
+            MEMORY_VMS.set(vms)
+                        
     except Exception as e:
         print(f"Error fetching memory info: {e}")
 
