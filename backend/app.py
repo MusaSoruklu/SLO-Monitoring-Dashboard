@@ -23,6 +23,12 @@ REQUEST_LATENCY = Summary('request_latency_seconds', 'Time spent processing requ
 ERROR_COUNT = Counter('error_count', 'Total number of errors')
 SUCCESS_COUNT = Counter('success_count', 'Total number of successful requests')
 TICKER_REQUEST_COUNT = Counter('ticker_request_count', 'Number of requests per ticker', ['ticker'])
+# Define Counters for each HTTP status code range
+HTTP_RESPONSES_INFO = Counter('http_responses_info', '1xx Informational responses')
+HTTP_RESPONSES_SUCCESS = Counter('http_responses_success', '2xx Successful responses')
+HTTP_RESPONSES_REDIRECTION = Counter('http_responses_redirection', '3xx Redirection messages')
+HTTP_RESPONSES_CLIENT_ERROR = Counter('http_responses_client_error', '4xx Client error responses')
+HTTP_RESPONSES_SERVER_ERROR = Counter('http_responses_server_error', '5xx Server error responses')
 
 # Custom metrics
 MEMORY_RSS = Gauge('memory_rss_bytes', 'Resident Set Size Memory Usage')
@@ -159,6 +165,29 @@ def update_system_metrics():
         CPU_USAGE.set(cpu_usage)
     except Exception as e:
         print(f"Error fetching CPU usage: {e}")
+
+
+# After request function to track status codes
+@app.after_request
+def track_status_codes(response):
+    # Get the status code from the response
+    status_code = response.status_code
+    
+    # Increment the appropriate counter based on the status code range
+    if 100 <= status_code < 200:
+        HTTP_RESPONSES_INFO.inc()
+    elif 200 <= status_code < 300:
+        HTTP_RESPONSES_SUCCESS.inc()
+    elif 300 <= status_code < 400:
+        HTTP_RESPONSES_REDIRECTION.inc()
+    elif 400 <= status_code < 500:
+        HTTP_RESPONSES_CLIENT_ERROR.inc()
+    elif 500 <= status_code < 600:
+        HTTP_RESPONSES_SERVER_ERROR.inc()
+
+    # Return the response back to the client
+    return response
+
 
 @app.route('/stock/<ticker>', methods=['GET'])
 @REQUEST_LATENCY.time()
