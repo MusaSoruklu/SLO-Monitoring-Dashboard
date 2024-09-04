@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: saeidnkh/backend:latest  # Use the 'latest' tag from Docker Hub
+    image: mnikkilla/backend:latest  # Updated to your Docker Hub username
     ports:
       - "8001:8001"
     networks:
@@ -11,9 +11,9 @@ services:
       - FLASK_ENV=production
 
   frontend:
-    image: saeidnkh/frontend:latest  # Use the 'latest' tag from Docker Hub
+    image: mnikkilla/frontend:latest  # Updated to your Docker Hub username
     ports:
-      - "3001:80"  # Expose the frontend on port 3001 (can be changed to 80)
+      - "3001:80"  # Expose the frontend on port 3001 (or change this to 80)
     networks:
       - monitoring
 
