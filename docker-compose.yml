@@ -22,7 +22,7 @@ services:
   frontend:
     image: mnikkilla/frontend:16
     ports:
-      - "3000:80"
+      - "3001:80"
     networks:
       - monitoring
 
