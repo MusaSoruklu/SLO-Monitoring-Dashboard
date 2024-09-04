@@ -8,11 +8,50 @@ import { Observable } from 'rxjs';
 export class FinanceService {
 
   private baseUrl = 'http://localhost:5000'; // Base URL for API endpoints
+  private apiUrlKey = 'apiUrl'; // Key to store the API URL in localStorage
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+    const storedApiUrl = localStorage.getItem(this.apiUrlKey);
+    if (storedApiUrl) {
+      this.baseUrl = storedApiUrl;
+    }
+  }
+
+  getApiUrl(): string {
+    return this.baseUrl;
+  }
+
+  setApiUrl(url: string): void {
+    this.baseUrl = url;
+    localStorage.setItem(this.apiUrlKey, url);
+  }
 
   getStockPrice(ticker: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/stock/${ticker}`);
+  }
+
+  getPortfolio(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/portfolio`);
+  }
+
+  getBalance(username: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/balance/${username}`);
+  }
+
+  getTickerSuggestions(query: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/ticker-suggestions/${query}`);
+  }
+
+  getStockInfo(ticker: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/stock-info/${ticker}`);
+  }
+
+  buyStock(ticker: string, shares: number, userId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/buy`, { ticker, shares, user_id: userId });
+  }
+
+  sellStock(ticker: string, shares: number, userId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/sell`, { ticker, shares, user_id: userId });
   }
 
   getHistoricalTopStocks(): Observable<any> {
@@ -36,11 +75,11 @@ export class FinanceService {
   }
 
   getMarketNews(): Observable<any> {
-    return this.http.get(`http://localhost:5000/market-news`);
+    return this.http.get(`${this.baseUrl}/market-news`);
   }
 
   login(username: string, password: string) {
-    return this.http.post('http://localhost:5000/login', { username, password });
+    return this.http.post(`${this.baseUrl}/login`, { username, password });
   }
 }
 

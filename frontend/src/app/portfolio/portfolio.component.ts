@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { FinanceService } from '../services/finance.service';
 
 @Component({
   selector: 'app-portfolio',
@@ -13,14 +13,14 @@ export class PortfolioComponent implements OnInit {
   totalProfit = 0;
   overallProfitPercent = 0;
 
-  constructor(private http: HttpClient) {}
+  constructor(private financeService: FinanceService) {}
 
   ngOnInit(): void {
     this.fetchPortfolio();
   }
 
   fetchPortfolio(): void {
-    this.http.get('http://localhost:5000/portfolio').subscribe((data: any) => {
+    this.financeService.getPortfolio().subscribe((data: any) => {
       this.portfolio = data;
       this.calculateTotals();
     }, error => {

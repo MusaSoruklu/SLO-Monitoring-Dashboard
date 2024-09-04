@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { FinanceService } from '../services/finance.service';
 
 interface StockInfo {
   currentPrice: number;
@@ -20,7 +20,7 @@ export class TradeSharesComponent implements OnInit {
   currentStock: StockInfo | null = null;
   transactionInfo: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private financeService: FinanceService) {}
 
   ngOnInit() {
     this.fetchBalance();
@@ -29,7 +29,7 @@ export class TradeSharesComponent implements OnInit {
   fetchBalance() {
     const username = sessionStorage.getItem('username');
     if (username) {
-      this.http.get(`http://localhost:5000/balance/${username}`).subscribe({
+      this.financeService.getBalance(username).subscribe({
         next: (response: any) => this.balance = response.balance,
         error: (error) => console.error('Error fetching balance:', error)
       });
@@ -38,8 +38,7 @@ export class TradeSharesComponent implements OnInit {
 
   searchTicker(query: string) {
     if (!query) return;
-    // Fetch ticker suggestions
-    this.http.get<string[]>(`http://localhost:5000/ticker-suggestions/${query}`).subscribe({
+    this.financeService.getTickerSuggestions(query).subscribe({
       next: suggestions => this.tickerSuggestions = suggestions,
       error: () => this.tickerSuggestions = []
     });
@@ -47,7 +46,7 @@ export class TradeSharesComponent implements OnInit {
 
   loadStockInfo(ticker: string) {
     this.selectedTicker = ticker;
-    this.http.get<StockInfo>(`http://localhost:5000/stock-info/${ticker}`).subscribe({
+    this.financeService.getStockInfo(ticker).subscribe({
       next: stockInfo => this.currentStock = stockInfo,
       error: error => console.error('Error loading stock info:', error)
     });
@@ -55,29 +54,27 @@ export class TradeSharesComponent implements OnInit {
 
   buy() {
     if (this.selectedTicker && this.shares > 0) {
-      this.http.post('http://localhost:5000/buy', { ticker: this.selectedTicker, shares: this.shares, user_id: 'admin' })
-        .subscribe({
-          next: (response: any) => {
-            this.transactionInfo = 'Purchase successful';
-            this.loadStockInfo(this.selectedTicker!); // Reload stock info after purchase
-            this.fetchBalance(); // Reload balance
-          },
-          error: (error) => this.transactionInfo = 'Purchase failed: ' + error.error.message
-        });
+      this.financeService.buyStock(this.selectedTicker, this.shares, 'admin').subscribe({
+        next: (response: any) => {
+          this.transactionInfo = 'Purchase successful';
+          this.loadStockInfo(this.selectedTicker!); // Reload stock info after purchase
+          this.fetchBalance(); // Reload balance
+        },
+        error: (error) => this.transactionInfo = 'Purchase failed: ' + error.error.message
+      });
     }
   }
 
   sell() {
     if (this.selectedTicker && this.shares > 0) {
-      this.http.post('http://localhost:5000/sell', { ticker: this.selectedTicker, shares: this.shares, user_id: 'admin' })
-        .subscribe({
-          next: (response: any) => {
-            this.transactionInfo = 'Sale successful';
-            this.loadStockInfo(this.selectedTicker!); // Reload stock info after sale
-            this.fetchBalance(); // Reload balance
-          },
-          error: (error) => this.transactionInfo = 'Sale failed: ' + error.error.message
-        });
+      this.financeService.sellStock(this.selectedTicker, this.shares, 'admin').subscribe({
+        next: (response: any) => {
+          this.transactionInfo = 'Sale successful';
+          this.loadStockInfo(this.selectedTicker!); // Reload stock info after sale
+          this.fetchBalance(); // Reload balance
+        },
+        error: (error) => this.transactionInfo = 'Sale failed: ' + error.error.message
+      });
     }
   }
 }
