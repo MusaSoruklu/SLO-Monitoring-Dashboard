@@ -12,14 +12,14 @@ COPY package*.json ./
 # Install the project dependencies
 RUN npm install
 
+# Install Angular CLI globally to avoid permission issues
+RUN npm install -g @angular/cli
+
 # Copy the rest of the application files
 COPY . .
 
-# Add Angular CLI as a dev dependency
-RUN npm install @angular/cli
-
 # Build the Angular application in production mode
-RUN npx ng build --configuration production
+RUN ng build --configuration production
 
 # Stage 2: Serve the Angular application using Nginx
 FROM nginx:alpine
