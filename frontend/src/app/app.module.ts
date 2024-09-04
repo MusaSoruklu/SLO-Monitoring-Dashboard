@@ -9,6 +9,11 @@ import { StocksComponent } from './stocks/stocks.component';
 import { PortfolioComponent } from './portfolio/portfolio.component';
 import { TradeSharesComponent } from './trade-shares/trade-shares.component';
 import { TeamSettingsComponent } from './team-settings/team-settings.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatSelectModule} from '@angular/material/select';
+import {MatInputModule} from '@angular/material/input';
+import {MatAutocompleteModule} from '@angular/material/autocomplete';
 
 
 @NgModule({
@@ -24,7 +29,12 @@ import { TeamSettingsComponent } from './team-settings/team-settings.component';
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    FormsModule
+    FormsModule,
+    BrowserAnimationsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatAutocompleteModule
   ],
   providers: [],
   bootstrap: [AppComponent]

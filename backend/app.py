@@ -50,26 +50,41 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
+    balance = db.Column(db.Float, nullable=False, default=2000000)  # Initialize with £2,000,000
 
     def __repr__(self):
         return f'<User {self.username}>'
     
+class Portfolio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Ensure foreign key is pointing to 'user.id'
+    user = db.relationship('User', backref=db.backref('portfolios', lazy=True))  # Set up relationship
+    ticker = db.Column(db.String(10), nullable=False)
+    purchase_price = db.Column(db.Float, nullable=False)
+    shares = db.Column(db.Integer, nullable=False)
+    purchase_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    def __repr__(self):
+        return f'<Portfolio {self.ticker}>'
+    
 @app.cli.command('init-db')
 def init_db_command():
-    """Initialize the database and seed it with default user and news data if they don't exist."""
-    db.create_all()  # This will not affect existing tables and data
-    print('Checked and ensured all tables are created.')
+    """Drops existing tables, recreates them, and seeds with default data."""
+    db.drop_all()  # Drop all tables
+    db.create_all()  # Create all necessary tables based on the model definitions
+    print('All tables dropped and recreated.')
 
-    # Check if default user exists
-    if User.query.filter_by(username='admin').first() is None:
-        default_user = User(username='admin', password='admin')  # Note: Plain text password is not secure
+    # Creating and checking for default user
+    default_user = User.query.filter_by(username='admin').first()
+    if not default_user:
+        # Creating the default admin user with a specified balance
+        default_user = User(username='admin', password='admin', balance=2000000)  # Initializing with £2,000,000
         db.session.add(default_user)
         db.session.commit()
-        print('Added default admin user.')
+        print('Added default admin user with initial balance of £2,000,000.')
 
-    # Check if there are any news entries
+    # Check and add sample news entries
     if News.query.count() == 0:
-        # Sample news data
         news_samples = [
             {"title": "Tesla Surpasses Market Expectations", "content": "Tesla's latest earnings report shows a surprising increase in profits, surpassing Wall Street predictions.", "tickers": "TSLA", "posted_on": datetime(2024, 8, 30, 14, 30)},
             {"title": "Apple Unveils New Product Line", "content": "Apple has announced a new line of innovative products scheduled to be released next quarter.", "tickers": "AAPL", "posted_on": datetime(2024, 8, 30, 15, 0)},
@@ -82,6 +97,33 @@ def init_db_command():
             db.session.add(new_news)
         db.session.commit()
         print('Added sample news stories to the database.')
+
+    # Seed the portfolio if not already present
+    portfolio_data = [
+        {'ticker': 'AAPL', 'purchase_price': 150.0, 'shares': 2000},
+        {'ticker': 'MSFT', 'purchase_price': 250.0, 'shares': 1200},
+        {'ticker': 'GOOGL', 'purchase_price': 2800.0, 'shares': 340},
+        {'ticker': 'AMZN', 'purchase_price': 3100.0, 'shares': 300},
+        {'ticker': 'FB', 'purchase_price': 270.0, 'shares': 1500},
+        {'ticker': 'TSLA', 'purchase_price': 800.0, 'shares': 1250},
+        {'ticker': 'NFLX', 'purchase_price': 500.0, 'shares': 800},
+        {'ticker': 'INTC', 'purchase_price': 50.0, 'shares': 5000},
+        {'ticker': 'CSCO', 'purchase_price': 45.0, 'shares': 2200},
+        {'ticker': 'ORCL', 'purchase_price': 60.0, 'shares': 1700},
+        {'ticker': 'IBM', 'purchase_price': 130.0, 'shares': 900},
+        {'ticker': 'NVDA', 'purchase_price': 500.0, 'shares': 800},
+        {'ticker': 'PYPL', 'purchase_price': 180.0, 'shares': 1100},
+        {'ticker': 'ADBE', 'purchase_price': 470.0, 'shares': 600},
+        {'ticker': 'BABA', 'purchase_price': 220.0, 'shares': 1400}
+    ]
+    for entry in portfolio_data:
+        new_stock = Portfolio(ticker=entry['ticker'], purchase_price=entry['purchase_price'], shares=entry['shares'], user_id=default_user.id)  # Set user_id to the default user's id
+        db.session.add(new_stock)
+    db.session.commit()
+    print('Completed database initialization with all sample data.')
+
+
+
 
 @app.route('/metrics')
 def metrics():
@@ -125,14 +167,10 @@ def update_system_metrics():
 @REQUEST_LATENCY.time()
 def get_stock_price(ticker):
     REQUEST_COUNT.inc()
-    TICKER_REQUEST_COUNT.labels(ticker=ticker).inc()
-    update_system_metrics()  # Update system metrics at the start of the request
-
     try:
         stock = yf.Ticker(ticker)
-        hist_data = stock.history(period='1mo')  # Fetch historical data for the last month
-
-        if (hist_data.empty):
+        data = stock.history(period='1d')
+        if data.empty:
             ERROR_COUNT.inc()
             return jsonify({"error": "Ticker not found"}), 404
         
@@ -198,4 +236,85 @@ def get_historical_top_stocks():
         return jsonify({'data': formatted_data, 'dates': dates})
     except Exception as e:
         ERROR_COUNT.inc()
-        return jsonify({"error": str(e), "failed_tickers": []}),
+        return jsonify({"error": str(e), "failed_tickers": []}), 500
+    
+@app.route('/revenue-trends/<ticker>', methods=['GET'])
+def get_revenue_trends(ticker):
+    try:
+        data, _ = fd.get_income_statement_annual(ticker)
+        if 'annualReports' in data:
+            revenue_data = [item['totalRevenue'] for item in data['annualReports']]
+            dates = [item['fiscalDateEnding'] for item in data['annualReports']]
+            return jsonify({"dates": dates, "revenue": revenue_data})
+        else:
+            return jsonify({"error": "No data found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/market-news', methods=['GET'])
+def get_market_news():
+    # Retrieve query parameters
+    tickers = request.args.get('tickers', '').split(',') if request.args.get('tickers') else ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
+    time_from = request.args.get('time_from')
+    time_to = request.args.get('time_to')
+    sort = request.args.get('sort', 'LATEST')
+    limit = int(request.args.get('limit', '50'))
+
+    # Build query based on parameters
+    query = News.query
+    
+    if tickers[0]:  # Check if tickers list is not empty
+        query = query.filter(News.tickers.in_(tickers))
+    if time_from:
+        query = query.filter(News.posted_on >= datetime.strptime(time_from, '%Y-%m-%d'))
+    if time_to:
+        query = query.filter(News.posted_on <= datetime.strptime(time_to, '%Y-%m-%d'))
+    
+    # Sorting by date
+    if sort == 'LATEST':
+        query = query.order_by(News.posted_on.desc())
+    else:
+        query = query.order_by(News.posted_on)
+    
+    # Limiting results
+    news_list = query.limit(limit).all()
+
+    # Prepare response
+    results = [{
+        "title": news.title,
+        "content": news.content,  # Changed from 'summary' to 'content' to match the database schema
+        "posted_on": news.posted_on.strftime('%Y-%m-%d %H:%M:%S'),
+        "tickers": news.tickers
+    } for news in news_list]
+
+    return jsonify(results)
+    
+@app.route('/earnings-insights', methods=['GET'])
+def get_earnings_insights(ticker):
+    REQUEST_COUNT.inc()
+    try:
+        data, _ = fd.get_company_overview(ticker)
+        earnings_data = {
+            "EPS": data.get("EPS"),
+            "ProfitMargin": data.get("ProfitMargin"),
+            "OperatingMarginTTM": data.get("OperatingMarginTTM"),
+        }
+        SUCCESS_COUNT.inc()
+        return jsonify(earnings_data)
+    except Exception as e:
+        ERROR_COUNT.inc()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json['username']
+    password = request.json['password']
+    user = User.query.filter_by(username=username).first()
+    if user and user.password == password:
+        return jsonify({"message": "Login successful", "user": user.username}), 200
+    else:
+        return jsonify({"error": "Invalid credentials"}), 401
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

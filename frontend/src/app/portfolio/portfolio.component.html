@@ -1,1 +1,39 @@
-<p>portfolio works!</p>
+<div class="container">
+  <h1>My Portfolio</h1>
+  <div class="stats-box">
+    <p>Total Investment: {{ totalInvestment | currency:'GBP' }}</p>
+    <p>Total Value: {{ totalValue | currency:'GBP' }}</p>
+    <p>Overall Profit: {{ totalProfit | currency:'GBP' }}</p>
+    <p>Overall Profit (%): {{ overallProfitPercent | number:'1.2-2' }}%</p>
+  </div>
+  <table class="portfolio-table">
+    <thead>
+      <tr>
+        <th>Ticker</th>
+        <th>Shares</th>
+        <th>Purchase Price</th>
+        <th>Current Price</th>
+        <th>Total Purchase Value</th>
+        <th>Total Current Value</th>
+        <th>Profit (£)</th>
+        <th>Profit (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let stock of portfolio">
+        <td>{{ stock.ticker }}</td>
+        <td>{{ stock.shares }}</td>
+        <td>{{ stock.purchase_price | currency:'GBP' }}</td>
+        <td>{{ stock.current_price | currency:'GBP' }}</td>
+        <td>{{ stock.purchase_price * stock.shares | currency:'GBP' }}</td>
+        <td>{{ stock.current_price * stock.shares | currency:'GBP' }}</td>
+        <td [ngClass]="{'profit': stock.profit > 0, 'loss': stock.profit < 0}">
+          {{ stock.profit | currency:'GBP' }}
+        </td>
+        <td [ngClass]="{'profit': stock.profit_percent > 0, 'loss': stock.profit_percent < 0}">
+          {{ stock.profit_percent | number:'1.2-2' }}%
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

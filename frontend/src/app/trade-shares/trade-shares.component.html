@@ -1,1 +1,44 @@
-<p>trade-shares works!</p>
+<div class="trade-container">
+    <h2>Trade Shares</h2>
+
+    <div *ngIf="balance">
+        <h3>Your Balance: {{ balance | currency:'GBP' }}</h3>
+    </div>
+
+    <div>
+        <mat-form-field appearance="fill">
+            <mat-label>Ticker</mat-label>
+            <input matInput type="text" id="ticker" [(ngModel)]="ticker" [matAutocomplete]="auto" (input)="searchTicker(ticker)">
+            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="loadStockInfo($event.option.value)">
+                <mat-option *ngFor="let suggestion of tickerSuggestions" [value]="suggestion">
+                    {{ suggestion }}
+                </mat-option>
+            </mat-autocomplete>
+        </mat-form-field>
+    </div>
+
+    <div *ngIf="currentStock">
+        <p>Current Price: {{ currentStock.currentPrice | currency:'GBP' }}</p>
+        <p>Shares Owned: {{ currentStock.sharesOwned }}</p>
+    </div>
+
+    <div>
+        <label for="shares">Shares:</label>
+        <input matInput type="number" id="shares" [(ngModel)]="shares" [disabled]="!selectedTicker">
+    </div>
+
+    <div>
+        <button mat-raised-button color="primary" (click)="buy()" 
+            [disabled]="!selectedTicker || shares <= 0 || balance! < (shares * currentStock!.currentPrice)">
+            Buy <i class="fas fa-arrow-up"></i>
+        </button>
+        <button mat-raised-button color="accent" (click)="sell()" 
+            [disabled]="!selectedTicker || shares <= 0 || currentStock!.sharesOwned < shares">
+            Sell <i class="fas fa-arrow-down"></i>
+        </button>
+    </div>
+
+    <div *ngIf="transactionInfo">
+        <p>{{ transactionInfo }}</p>
+    </div>
+</div>
