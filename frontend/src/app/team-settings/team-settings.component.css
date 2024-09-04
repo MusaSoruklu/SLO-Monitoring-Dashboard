@@ -1,0 +1,14 @@
+.settings-container {
+    max-width: 500px;
+    margin: 20px auto;
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  mat-card {
+    padding: 20px;
+    margin-top: 20px;
+  }
+  
