@@ -7,7 +7,6 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./dist/slo-monitoring-dashboard-frontend:/usr/share/nginx/html  # Serve Angular files directly
     networks:
       - monitoring
 
