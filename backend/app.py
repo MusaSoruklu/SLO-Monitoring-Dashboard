@@ -122,9 +122,6 @@ def init_db_command():
     db.session.commit()
     print('Completed database initialization with all sample data.')
 
-
-
-
 @app.route('/metrics')
 def metrics():
     return generate_latest()
@@ -167,10 +164,11 @@ def update_system_metrics():
 @REQUEST_LATENCY.time()
 def get_stock_price(ticker):
     REQUEST_COUNT.inc()
+    TICKER_REQUEST_COUNT.labels(ticker=ticker).inc()
     try:
         stock = yf.Ticker(ticker)
-        data = stock.history(period='1d')
-        if data.empty:
+        hist_data = stock.history(period='1mo')  # Fetch historical data for the last month
+        if hist_data.empty:
             ERROR_COUNT.inc()
             return jsonify({"error": "Ticker not found"}), 404
         
@@ -178,15 +176,11 @@ def get_stock_price(ticker):
         hist_prices = hist_data['Close'].tolist()
         hist_dates = hist_data.index.strftime('%Y-%m-%d').tolist()
         hist_volume = hist_data['Volume'].tolist()
-
         # Fetch stock information
         info = stock.info
-
         # Get the most recent close price
         closing_price = hist_prices[-1] if hist_prices else None
-
         SUCCESS_COUNT.inc()
-        update_system_metrics()  # Update metrics after processing
         return jsonify({
             "ticker": ticker,
             "current_price": closing_price,
@@ -314,6 +308,140 @@ def login():
         return jsonify({"message": "Login successful", "user": user.username}), 200
     else:
         return jsonify({"error": "Invalid credentials"}), 401
+    
+@app.route('/portfolio', methods=['GET'])
+def get_portfolio():
+    portfolio_items = Portfolio.query.all()
+    results = []
+    for item in portfolio_items:
+        stock = yf.Ticker(item.ticker)
+        current_data = stock.history(period='1d')
+        current_price = current_data['Close'].iloc[-1] if not current_data.empty else None
+        if current_price:
+            purchase_value = item.purchase_price * item.shares
+            current_value = current_price * item.shares
+            profit = current_value - purchase_value
+            profit_percent = (profit / purchase_value) * 100
+            results.append({
+                "ticker": item.ticker,
+                "shares": item.shares,
+                "purchase_price": item.purchase_price,
+                "current_price": current_price,
+                "profit": profit,
+                "profit_percent": profit_percent
+            })
+    return jsonify(results)
+
+
+@app.route('/balance/<string:username>', methods=['GET'])
+def get_balance(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return jsonify({"balance": user.balance}), 200
+    else:
+        return jsonify({"error": "User not found"}), 404
+
+@app.route('/ticker-suggestions/<query>', methods=['GET'])
+def get_ticker_suggestions(query):
+    # Example static list of tickers, ideally, this could be dynamic or from the database
+    all_tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'FB', 'NFLX', 'INTC', 'CSCO', 'ORCL', 'IBM', 'NVDA', 'PYPL', 'ADBE', 'BABA']
+    suggestions = [ticker for ticker in all_tickers if ticker.lower().startswith(query.lower())]
+    return jsonify(suggestions)
+
+@app.route('/stock-info/<ticker>', methods=['GET'])
+def get_stock_info(ticker):
+    # Directly querying for the admin user from the database
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        return jsonify({"error": "Admin user not found"}), 404
+
+    stock = yf.Ticker(ticker)
+    current_data = stock.history(period='1d')
+    current_price = current_data['Close'].iloc[-1] if not current_data.empty else None
+
+    if current_price is None:
+        return jsonify({"error": "Could not fetch current price for the ticker."}), 404
+
+    # Using the admin user's ID to filter the portfolio
+    portfolio_entry = Portfolio.query.filter_by(ticker=ticker, user_id=admin_user.id).first()
+    shares_owned = portfolio_entry.shares if portfolio_entry else 0
+
+    return jsonify({
+        "currentPrice": float(current_price),
+        "sharesOwned": shares_owned
+    })
+
+@app.route('/buy', methods=['POST'])
+def buy_stock():
+    data = request.get_json()
+    ticker = data.get('ticker')
+    shares_to_buy = int(data.get('shares'))
+
+    # Directly querying for the admin user from the database
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        return jsonify({"error": "Admin user not found"}), 404
+
+    stock = yf.Ticker(ticker)
+    current_data = stock.history(period='1d')
+    current_price = current_data['Close'].iloc[-1] if not current_data.empty else None
+    if not current_price:
+        return jsonify({"error": "Failed to get current stock price"}), 404
+
+    total_cost = shares_to_buy * current_price
+    if admin_user.balance < total_cost:
+        return jsonify({"error": "Insufficient balance"}), 400
+
+    admin_user.balance -= total_cost
+    portfolio_entry = Portfolio.query.filter_by(ticker=ticker, user_id=admin_user.id).first()
+    if portfolio_entry:
+        portfolio_entry.shares += shares_to_buy
+    else:
+        db.session.add(Portfolio(ticker=ticker, purchase_price=current_price, shares=shares_to_buy, user_id=admin_user.id))
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Purchase successful", "new_balance": admin_user.balance}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/sell', methods=['POST'])
+def sell_stock():
+    data = request.get_json()
+    ticker = data.get('ticker')
+    shares_to_sell = int(data.get('shares'))
+
+    # Directly querying for the admin user from the database
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        return jsonify({"error": "Admin user not found"}), 404
+
+    stock = yf.Ticker(ticker)
+    current_data = stock.history(period='1d')
+    current_price = current_data['Close'].iloc[-1] if not current_data.empty else None
+    if not current_price:
+        return jsonify({"error": "Failed to get current stock price"}), 404
+
+    portfolio_entry = Portfolio.query.filter_by(ticker=ticker, user_id=admin_user.id).first()
+    if not portfolio_entry or portfolio_entry.shares < shares_to_sell:
+        return jsonify({"error": "Not enough shares in portfolio"}), 400
+
+    total_revenue = shares_to_sell * current_price
+    admin_user.balance += total_revenue
+
+    if portfolio_entry.shares > shares_to_sell:
+        portfolio_entry.shares -= shares_to_sell
+    else:
+        db.session.delete(portfolio_entry)
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Sale successful", "new_balance": admin_user.balance}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
