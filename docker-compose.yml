@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: saeidnkh/backend:latest  # Use the 'latest' tag from Docker Hub
     ports:
       - "8001:8001"
     networks:
@@ -13,11 +11,9 @@ services:
       - FLASK_ENV=production
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: saeidnkh/frontend:latest  # Use the 'latest' tag from Docker Hub
     ports:
-      - "3001:80"
+      - "3001:80"  # Expose the frontend on port 3001 (can be changed to 80)
     networks:
       - monitoring
 

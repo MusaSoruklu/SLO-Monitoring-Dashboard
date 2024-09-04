@@ -5,12 +5,13 @@ import random
 from datetime import datetime
 
 # CONFIGURATION 
-WEB_APP_URL = "http://web-app-url"              # TODO: Replace with web application's URL
+WEB_APP_URL = "http://localhost:5000"              # TODO: Replace with web application's URL
 NUM_REQUESTS = 300  # Number of requests to simulate
 MIN_DELAY = 1  # Minimum delay between requests in seconds
 MAX_DELAY = 5  # Maximum delay between requests in seconds
 DATABASE = "traffic_data.db"  # SQLite database file  # TODO: merge with DB in backend code  
 
+URL_ENDPOINT = None                             # TODO: Add endpoints
 
 # DATABASE SETUP                                TODO: (similar to prometheus?)
 def setup_database():
