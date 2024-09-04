@@ -14,7 +14,7 @@ services:
       - monitoring
 
   backend:
-    image: mnikkilla/backend:latest
+    image: mnikkilla/backend:16
     ports:
       - "8001:8001"
     networks:
@@ -23,7 +23,7 @@ services:
       - FLASK_ENV=production
 
   frontend:
-    image: mnikkilla/frontend:latest
+    image: mnikkilla/frontend:16
     ports:
       - "3001:80"
     networks:
