@@ -1,77 +1,149 @@
-# SLO-Monitoring-Dashboard
 
-The goal of this project is to combine knowledge of Site Reliability Engineering (SRE) with practical implementation by creating a comprehensive monitoring and alerting system for a web application.
+# SLO Monitoring Dashboard
 
-The web application is a simple trading system that displays real-time stock data. A Python script is used to simulate random web server traffic. The system is designed to track key Service-Level Objectives (SLOs), such as response times and availability, ensuring that the web application operates within defined performance thresholds.
+## Overview
+
+This project is a complete stack monitoring dashboard application that allows users to monitor stock market performance, news, and personal portfolios. The application is divided into two parts:
+
+- **Backend**: A Flask-based API that provides stock data, news, and portfolio information using `yfinance`, `Alpha Vantage`, and Prometheus for monitoring.
+- **Frontend**: An Angular-based dashboard that offers an interface to view the data provided by the backend.
+
+## Features
+
+### Backend
+- Stock information retrieval via `yfinance`.
+- Stock fundamental data via Alpha Vantage API.
+- News and portfolio management using `Flask-SQLAlchemy`.
+- Prometheus metrics integration for monitoring system performance.
+- User authentication and portfolio tracking.
+- Flask CORS support for cross-origin requests.
+- Exposes metrics for Prometheus, including custom metrics such as memory usage, CPU usage, and HTTP status codes.
+
+### Frontend
+- Built with Angular for a responsive user interface.
+- Displays real-time stock data and news.
+- Allows users to view and manage their stock portfolios.
+
+## Application Architecture
+
+The application is composed of two major components:
+1. **Backend (Flask API)**: Provides APIs for stock data, portfolio management, user login, and news.
+2. **Frontend (Angular)**: Displays stock data, market trends, and portfolio information to the user.
+
+### Folder Structure
+```
+SLO-MONITORING-DASHBOARD/
+├── backend/                    # Flask Backend
+│   ├── app.py                  # Main Flask app
+│   ├── Dockerfile              # Dockerfile for Backend
+│   ├── requirements.txt        # Python dependencies
+│   └── prometheus.yml          # Prometheus configuration
+├── frontend/                   # Angular Frontend
+│   ├── src/                    # Angular source code
+│   ├── Dockerfile              # Dockerfile for Frontend
+│   ├── nginx.conf              # Custom Nginx configuration
+│   └── angular.json            # Angular project configuration
+├── docker-compose.yml          # Docker Compose configuration for both backend and frontend
+├── slo-monitoring-dashboard.yaml  # Kubernetes deployment YAML file
+└── README.md                   # Project documentation
+```
+
+## Backend Setup
+
+### Prerequisites
+- Python 3.9+
+- Docker
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/slo-monitoring-dashboard.git
+   cd slo-monitoring-dashboard/backend
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Start the application:
+   ```bash
+   flask run
+   ```
+
+4. Access the Prometheus metrics at `http://localhost:8000/metrics`.
+
+### API Endpoints
+
+- `/stock/<ticker>`: Fetch stock data for the given ticker.
+- `/top-stocks`: Fetch top stock data.
+- `/market-news`: Get the latest market news.
+- `/portfolio`: Get the current portfolio of the logged-in user.
+- `/buy`: Buy stock for the user.
+- `/sell`: Sell stock for the user.
+
+### Prometheus Metrics
+
+The backend integrates with Prometheus for monitoring. Metrics are exposed at `/metrics` and include:
+
+- Request count and latency.
+- Memory and CPU usage.
+- HTTP status code counters.
+
+## Frontend Setup
+
+### Prerequisites
+- Node.js 18.x+
+- Angular CLI
+
+### Installation
+
+1. Navigate to the `frontend` directory:
+   ```bash
+   cd ../frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Run the development server:
+   ```bash
+   ng serve
+   ```
+
+4. Open `http://localhost:4200` to view the application.
+
+## Running with Docker
+
+You can easily run both the frontend and backend with Docker using either Docker Compose or Kubernetes.
+
+### Docker Compose
+
+1. Ensure Docker is installed and running on your system.
+2. Run the following command to build and start the containers:
+   ```bash
+   docker-compose up --build
+   ```
+
+3. Access the frontend at `http://localhost:80` and the backend at `http://localhost:8001`.
+
+### Kubernetes
+
+1. Deploy the application using the provided Kubernetes YAML file:
+   ```bash
+   kubectl apply -f slo-monitoring-dashboard.yaml
+   ```
+
+2. Kubernetes will manage the frontend and backend as services. Adjust the `slo-monitoring-dashboard.yaml` file to configure scaling, ingress, and other settings as needed.
 
 
-## Table of Contents
 
-#### 🟣 &nbsp; [Installation and usage instructions](#1-installation-and-usage-instructions)
-#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◎ &nbsp; [Usage ]()
-#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◎ &nbsp; [Tools and dependencies]()
+## License
 
-
-#### 🟣 &nbsp; [Project architecture](#2-project-architecture)
-#### 🟣 &nbsp; [File structure of the project](#3-file-structure-of-the-project)
-#### 🟣 &nbsp; [License information](#4-license-information)
-
-
-## 1. Installation and usage instructions
-
-### Tools and dependencies:
-
-- **Jenkins :** Jenkins is an open-source automation server used for continuous integration and continuous delivery (CI/CD). It helps automate the building, testing, and deployment of applications. Documentation is available [here](https://www.jenkins.io/doc/)
-
-- **Docker :** Docker is a platform that automates the deployment, scaling, and management of applications using containerisation. Containers bundle an application and its dependencies into a lightweight unit that can run consistently across various environments. Documentation is available [here](https://docs.docker.com/)
-
-- **Prometheus :** Prometheus is an open-source monitoring and alerting toolkit designed for reliability and scalability. It is used to collect and store real-time metrics from the web application and system resources. Documentation is available [here](https://prometheus.io/docs/)
-
-- **Grafana :** Grafana is an open-source analytics and monitoring platform that enables the creation of dynamic dashboards and visualisations. Documentation is available [here](https://grafana.com/docs/)
-
-
-<div align="right">
-
-[Back to top](#slo-monitoring-dashboard)
-</div> 
-
-## 2. Project architecture 
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 
 
-<div align="right">
-
-[Back to top](#slo-monitoring-dashboard)
-</div> 
-
-## 3. File structure of the project
-
-1. **web_traffic_simulator.py :** Script to simulate web server traffic and log response times to a SQLite database.
-
-    - setup_database (function): Sets up the SQLite database to store response times, timestamps, and HTTP status codes.
-    - random_delay (wrapper function): Adds a random delay between each HTTP request to simulate more realistic traffic patterns.
-    - make_request (function): Sends an HTTP GET request to the web application. Logs the response time and status code to the SQLite database.
-    - simulate_traffic (function): Simulates traffic by repeatedly calling make_request for the number of requests defined in NUM_REQUESTS.
-
-1. **JenkinsFIle :** Defines a Jenkins pipeline for building and pushing Docker images for frontend and backend applications.
-
-    - Checkout SCM (stage): Retrieves the source code from the specified Git repository using the 'main' branch and provided credentials.
-    - Build Backend (stage): Builds the Docker image for the backend application and tags it with the current build number.
-    - Build Frontend (stage): Builds the Docker image for the frontend application and tags it with the current build number.
-    - Push Backend (stage): Pushes the backend Docker image to the Docker registry.
-    - Push Frontend (stage): Pushes the frontend Docker image to the Docker registry.
-    - Post Actions (post): Cleans up the workspace after the build process is complete.
-
-
-<div align="right">
-
-[Back to top](#slo-monitoring-dashboard)
-</div> 
-
-## 4. License information
-GNU General Public License (GPL) v3.0
-
-<div align="right">
-
-[Back to top](#slo-monitoring-dashboard)
-</div> 
