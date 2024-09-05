@@ -27,6 +27,9 @@ FROM nginx:alpine
 # Copy the built Angular application from the build stage
 COPY --from=build /app/dist/slo-monitoring-dashboard-frontend /usr/share/nginx/html
 
+# Debug step: List the contents of /etc/nginx to verify the copied file
+RUN ls -al /etc/nginx && cat /etc/nginx/nginx.conf
+
 # Copy the custom Nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
@@ -34,4 +37,4 @@ COPY nginx.conf /etc/nginx/nginx.conf
 EXPOSE 80
 
 # Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;", "-c", "/etc/nginx/nginx.conf"]
