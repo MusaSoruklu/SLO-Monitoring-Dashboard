@@ -141,7 +141,38 @@ You can easily run both the frontend and backend with Docker using either Docker
 2. Kubernetes will manage the frontend and backend as services. Adjust the `slo-monitoring-dashboard.yaml` file to configure scaling, ingress, and other settings as needed.
 
 
+## Monitoring and Metrics
 
+This project leverages **Prometheus** for collecting application and system metrics, and **Grafana** for visualizing these metrics. The backend exposes various Prometheus metrics related to system performance and HTTP requests, which can be monitored and visualized in Grafana.
+
+### Prometheus Metrics
+
+- **Request Count**: Total number of requests to the backend API.
+- **Request Latency**: Time spent processing each request.
+- **Error Count**: Total number of errors in API responses.
+- **Custom Metrics**:
+  - **Memory Usage (RSS and VMS)**: Tracks memory consumption.
+  - **CPU Usage**: Tracks CPU usage.
+  - **HTTP Status Codes**: Counters for informational (1xx), successful (2xx), redirection (3xx), client error (4xx), and server error (5xx) responses.
+
+### Grafana Dashboard
+
+A Grafana dashboard is used to visualize these metrics. You can access metrics such as request counts, error rates, memory consumption, and CPU usage from the Prometheus backend in real-time.
+
+Here’s an example of how the Grafana dashboard might look:
+
+![Grafana Dashboard](./Documents/Grafana-dash.png)
+
+### Services Overview
+
+This project comprises four Docker services:
+1. **Backend Service (Flask API)**: Exposes API endpoints for stock data, portfolio management, and news.
+2. **Frontend Service (Angular)**: Serves the user interface for the dashboard.
+3. **Prometheus**: Scrapes metrics from the backend and other services.
+4. **Grafana**: Visualizes the metrics from Prometheus.
+
+These services are integrated using Docker Compose, and Prometheus automatically scrapes the metrics provided by the backend API at `/metrics`.
+"""
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
