@@ -2,29 +2,23 @@ version: '3.8'
 
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: mnikkilla/backend:16
     ports:
-      - "8001:8001"
+      - "5000:8001"
     networks:
       - monitoring
     environment:
       - FLASK_ENV=production
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: mnikkilla/frontend:16
     ports:
-      - "3001:80"
+      - "80:80"
     networks:
       - monitoring
 
   prometheus:
     image: prom/prometheus:latest
-    volumes:
-      - "/d/Saeid/wiley/New folder/SLO-Monitoring-Dashboard/backend/prometheus.yml:/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
     networks:

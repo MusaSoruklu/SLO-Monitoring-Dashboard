@@ -1,0 +1,193 @@
+---
+# Secret for storing sensitive information
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-app-secret
+  namespace: default  # Use appropriate namespace
+type: Opaque
+data:
+  username: c2FlZA==  
+  password: dGVzdDEyMw==  
+
+
+---
+# Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slo-monitoring-backend
+  labels:
+    app: slo-monitoring-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slo-monitoring-backend
+  template:
+    metadata:
+      labels:
+        app: slo-monitoring-backend
+    spec:
+      containers:
+      - name: backend-container
+        image: saeidnkh/slo-monitoring-dashboard-backend:latest
+        ports:
+        - containerPort: 8001
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secret
+              key: password
+        - name: FLASK_ENV
+          value: "production"
+---
+# Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: slo-monitoring-backend
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001
+      nodePort: 32001
+  type: NodePort
+
+---
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slo-monitoring-frontend
+  labels:
+    app: slo-monitoring-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slo-monitoring-frontend
+  template:
+    metadata:
+      labels:
+        app: slo-monitoring-frontend
+    spec:
+      containers:
+      - name: frontend-container
+        image: saeidnkh/slo-monitoring-dashboard-frontend:latest
+        ports:
+        - containerPort: 80
+---
+# Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: slo-monitoring-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 32002
+  type: NodePort
+
+---
+# Prometheus Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus/prometheus.yml
+          subPath: prometheus.yml
+        ports:
+        - containerPort: 9090
+      volumes:
+      - name: prometheus-config
+        hostPath:
+          path: /d/Saeid/wiley/New folder/SLO-Monitoring-Dashboard/backend/prometheus.yml
+          type: File
+---
+# Prometheus Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+      nodePort: 32003
+  type: NodePort
+
+---
+# Grafana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: "admin"
+---
+# Grafana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+spec:
+  selector:
+    app: grafana
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+      nodePort: 32004
+  type: NodePort
