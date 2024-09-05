@@ -1,52 +1,28 @@
----
-# Secret for storing sensitive information
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-app-secret
-  namespace: default  # Use appropriate namespace
-type: Opaque
-data:
-  username: c2FlZA==  
-  password: dGVzdDEyMw==  
-
-
----
 # Backend Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: slo-monitoring-backend
+  name: backend-deployment
   labels:
-    app: slo-monitoring-backend
+    app: backend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: slo-monitoring-backend
+      app: backend
   template:
     metadata:
       labels:
-        app: slo-monitoring-backend
+        app: backend
     spec:
       containers:
-      - name: backend-container
-        image: saeidnkh/slo-monitoring-dashboard-backend:latest
+      - name: backend
+        image: mnikkilla/backend:16
         ports:
         - containerPort: 8001
         env:
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: my-app-secret
-              key: username
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: my-app-secret
-              key: password
         - name: FLASK_ENV
-          value: "production"
+          value: production
 ---
 # Backend Service
 apiVersion: v1
@@ -54,36 +30,36 @@ kind: Service
 metadata:
   name: backend-service
 spec:
+  type: NodePort
   selector:
-    app: slo-monitoring-backend
+    app: backend
   ports:
     - protocol: TCP
-      port: 8001
+      port: 5000
       targetPort: 8001
-      nodePort: 32001
-  type: NodePort
+      nodePort: 30004
 
 ---
 # Frontend Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: slo-monitoring-frontend
+  name: frontend-deployment
   labels:
-    app: slo-monitoring-frontend
+    app: frontend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: slo-monitoring-frontend
+      app: frontend
   template:
     metadata:
       labels:
-        app: slo-monitoring-frontend
+        app: frontend
     spec:
       containers:
-      - name: frontend-container
-        image: saeidnkh/slo-monitoring-dashboard-frontend:latest
+      - name: frontend
+        image: mnikkilla/frontend:16
         ports:
         - containerPort: 80
 ---
@@ -93,21 +69,91 @@ kind: Service
 metadata:
   name: frontend-service
 spec:
+  type: NodePort
   selector:
-    app: slo-monitoring-frontend
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 3001
+      targetPort: 80
+      nodePort: 30001
+---
+# Nginx Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+      volumes:
+      - name: nginx-config-volume
+        configMap:
+          name: nginx-config
+---
+# Nginx Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: NodePort
+  selector:
+    app: nginx
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 32002
-  type: NodePort
-
+      nodePort: 30002
+---
+# ConfigMap for Nginx
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    user  nginx;
+    worker_processes  auto;
+    events {
+      worker_connections  1024;
+    }
+    http {
+      include       /etc/nginx/mime.types;
+      default_type  application/octet-stream;
+      server {
+        listen       80;
+        server_name  localhost;
+        location / {
+          root   /usr/share/nginx/html;
+          index  index.html index.htm;
+        }
+      }
+    }
 ---
 # Prometheus Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prometheus
+  name: prometheus-deployment
   labels:
     app: prometheus
 spec:
@@ -123,17 +169,8 @@ spec:
       containers:
       - name: prometheus
         image: prom/prometheus:latest
-        volumeMounts:
-        - name: prometheus-config
-          mountPath: /etc/prometheus/prometheus.yml
-          subPath: prometheus.yml
         ports:
         - containerPort: 9090
-      volumes:
-      - name: prometheus-config
-        hostPath:
-          path: /d/Saeid/wiley/New folder/SLO-Monitoring-Dashboard/backend/prometheus.yml
-          type: File
 ---
 # Prometheus Service
 apiVersion: v1
@@ -141,21 +178,19 @@ kind: Service
 metadata:
   name: prometheus-service
 spec:
+  type: ClusterIP
   selector:
     app: prometheus
   ports:
     - protocol: TCP
       port: 9090
       targetPort: 9090
-      nodePort: 32003
-  type: NodePort
-
 ---
 # Grafana Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: grafana
+  name: grafana-deployment
   labels:
     app: grafana
 spec:
@@ -175,7 +210,7 @@ spec:
         - containerPort: 3000
         env:
         - name: GF_SECURITY_ADMIN_PASSWORD
-          value: "admin"
+          value: admin
 ---
 # Grafana Service
 apiVersion: v1
@@ -183,11 +218,11 @@ kind: Service
 metadata:
   name: grafana-service
 spec:
+  type: NodePort
   selector:
     app: grafana
   ports:
     - protocol: TCP
       port: 3000
       targetPort: 3000
-      nodePort: 32004
-  type: NodePort
+      nodePort: 30003
