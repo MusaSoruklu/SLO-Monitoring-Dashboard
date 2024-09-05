@@ -1,13 +1,6 @@
 version: '3.8'
 
 services:
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    networks:
-      - monitoring
-
   backend:
     image: mnikkilla/backend:16
     ports:
