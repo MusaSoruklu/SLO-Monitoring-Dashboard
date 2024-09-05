@@ -84,13 +84,6 @@ SLO-MONITORING-DASHBOARD/
 - `/buy`: Buy stock for the user.
 - `/sell`: Sell stock for the user.
 
-### Prometheus Metrics
-
-The backend integrates with Prometheus for monitoring. Metrics are exposed at `/metrics` and include:
-
-- Request count and latency.
-- Memory and CPU usage.
-- HTTP status code counters.
 
 ## Frontend Setup
 
@@ -146,6 +139,7 @@ You can easily run both the frontend and backend with Docker using either Docker
 This project leverages **Prometheus** for collecting application and system metrics, and **Grafana** for visualizing these metrics. The backend exposes various Prometheus metrics related to system performance and HTTP requests, which can be monitored and visualized in Grafana.
 
 ### Prometheus Metrics
+The backend integrates with Prometheus for monitoring. Metrics are exposed at `/metrics` and include:
 
 - **Request Count**: Total number of requests to the backend API.
 - **Request Latency**: Time spent processing each request.
@@ -162,6 +156,7 @@ A Grafana dashboard is used to visualize these metrics. You can access metrics s
 Here’s an example of how the Grafana dashboard might look:
 
 ![Grafana Dashboard](./Documents/Grafana-dash.png)
+![Grafana Dashboard](./Documents/Grafana-dash1.png)
 
 ### Services Overview
 
