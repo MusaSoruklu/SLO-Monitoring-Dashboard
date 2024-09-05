@@ -3,6 +3,7 @@
 
 ## Overview
 
+![Dashboard Screenshot](./Documents/dash.png)
 This project is a complete stack monitoring dashboard application that allows users to monitor stock market performance, news, and personal portfolios. The application is divided into two parts:
 
 - **Backend**: A Flask-based API that provides stock data, news, and portfolio information using `yfinance`, `Alpha Vantage`, and Prometheus for monitoring.
