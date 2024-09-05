@@ -5,8 +5,6 @@ services:
     image: nginx:alpine
     ports:
       - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
     networks:
       - monitoring
 
