@@ -1,6 +1,15 @@
 
 # SLO Monitoring Dashboard
 
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Application Structure](#application-structure)
+3. [Backend API](#backend-api)
+4. [Frontend Application](#frontend-application)
+5. [CI/CD Pipeline](#ci-cd-pipeline)
+6. [Docker Containers](#docker-containers)
+7. [Development](#development)
+
 ## Overview
 
 ![Dashboard Screenshot](./Documents/dash.png)
@@ -174,9 +183,92 @@ This project comprises four Docker services:
 
 These services are integrated using Docker Compose, and Prometheus automatically scrapes the metrics provided by the backend API at `/metrics`.
 """
-## License
+## Development
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+### Backend Code Overview
+
+#### `app.py`
+
+- **Database Models**:
+  - **`User`**: Stores user data including username, password, and account balance.
+  - **`Portfolio`**: Tracks stocks owned by a user, including the number of shares, purchase price, and stock ticker.
+  - **`News`**: Holds market news articles along with associated stock tickers.
+
+- **Prometheus Metrics**:
+  - Several metrics are defined using Prometheus client:
+    - **`REQUEST_COUNT`**: Tracks the total number of API requests.
+    - **`ERROR_COUNT`**: Counts the number of errors encountered by the API.
+    - **`CPU_USAGE` and `MEMORY_RSS`**: Gauge CPU and memory usage for monitoring system performance.
+
+- **Stock API Integration**:
+  - Uses the `yfinance` library to fetch stock data from Yahoo Finance.
+  - The `alpha_vantage` library is used to get more detailed financial information, such as income statements.
+
+- **Important Routes**:
+  - **`/stock/<ticker>`**: Fetches current stock price and historical data for the specified ticker.
+  - **`/buy`** and **`/sell`**: Allows users to simulate buying and selling stocks. It adjusts the user's balance and updates their portfolio accordingly.
+
+#### Database Initialization (`init-db` command)
+- When the application is started with the `init-db` command, it:
+  1. Drops all tables and recreates them.
+  2. Seeds the database with a default `admin` user and sample news articles.
+  3. Adds initial portfolio data for the default user.
+
+- **Sample Code**:
+  ```python
+  @app.cli.command('init-db')
+  def init_db_command():
+      db.drop_all()
+      db.create_all()
+      print('All tables dropped and recreated.')
+      # Add default admin user and sample data here.
+
+### Frontend Code Overview
+
+- **Angular Application**:
+  - The frontend is structured as a typical Angular application with components for displaying stock data, portfolio management, and news feeds.
+  - The Angular app communicates with the backend API to fetch stock information and user portfolio data.
+
+- **Key Components**:
+  - **Dashboard Component**: The main user interface for displaying stock data and market news.
+  - **Portfolio Component**: Allows users to view and manage their stock portfolio, including buying and selling stocks.
+  - **Login Component**: Handles user authentication and login functionality.
+  - **News Component**: Displays the latest market news and trends.
+
+- **Services**:
+  - **StockService**: Communicates with the backend to fetch stock data, including prices, history, and financial insights.
+  - **PortfolioService**: Manages user portfolio data, such as adding new stocks and calculating current values.
+  - **AuthService**: Handles user authentication and session management.
+  - **NewsService**: Retrieves market news from the backend API and displays it in the frontend.
+
+- **Routing**:
+  - The frontend uses Angular's routing module to navigate between different sections of the dashboard.
+  - Routes include paths for viewing stock details, managing portfolios, and reading news articles.
+
+- **Build Process**:
+  - The Angular app is built using a multi-stage Dockerfile:
+    1. **Stage 1**: Uses a Node.js image to install dependencies and build the production version of the app with the `ng build --configuration production` command.
+    2. **Stage 2**: Uses an Nginx image to serve the built Angular files from the `/usr/share/nginx/html` directory.
+  
+- **Communication with Backend**:
+  - The frontend communicates with the Flask backend using HTTP requests (via Angular's `HttpClient` module). Data such as stock prices, user portfolios, and market news are fetched from the backend APIs and displayed in the dashboard.
+
+- **Build Commands**:
+  - After setting up the environment, run the following commands to build the frontend application:
+    ```bash
+    npm install  # Install dependencies
+    ng build --configuration production  # Build the Angular app in production mode
+    ```
+
+- **Development Commands**:
+  - To run the Angular application in development mode:
+    ```bash
+    ng serve  # Start the Angular dev server at http://localhost:4200
+    ```
+
+This section provides a high-level overview of the frontend code and its components, services, and build process.
+
+
 
 
 
