@@ -30,10 +30,9 @@ This project is a complete stack monitoring dashboard application that allows us
 The application is composed of two major components:
 1. **Backend (Flask API)**: Provides APIs for stock data, portfolio management, user login, and news.
 2. **Frontend (Angular)**: Displays stock data, market trends, and portfolio information to the user.
+   
 ## CI/CD Architecture
-
 The system is built using Docker, Jenkins, and Kubernetes for scalability and CI/CD.
-
 1. **Docker**: Containerizes the application, managing the backend, frontend, and other services. The `docker-compose.yml` file orchestrates the containers.
 2. **Jenkins**: Automates the CI/CD pipeline, building, testing, and deploying the application via Docker.
 3. **Kubernetes**: Manages deployment, scaling, and monitoring of containers in production, using the `slo-monitoring-dashboard.yaml` configuration.
