@@ -113,23 +113,104 @@ SLO-MONITORING-DASHBOARD/
 
 ### Installation
 
-1. Navigate to the `frontend` directory:
+# Installing Docker and Jenkins on an EC2 Instance
+
+This guide provides steps to install Docker and Jenkins on an AWS EC2 instance running Ubuntu.
+
+## Prerequisites
+1. **AWS EC2 instance**: Make sure your EC2 instance is running and accessible (Ubuntu 20.04 or later is recommended).
+2. **SSH Access**: Ensure you can connect to your instance via SSH using the appropriate key pair.
+
+### Step 1: Update the EC2 Instance
+Before installing any packages, it's a good practice to update the package manager:
+```bash
+sudo apt update && sudo apt upgrade -y
+###Step 2: Install Docker
+## 1- Install required dependencies:
    ```bash
-   cd ../frontend
+   sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
    ```
-
-2. Install dependencies:
+## 2- Add Docker’s official GPG key:
    ```bash
-   npm install
+   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
    ```
-
-3. Run the development server:
+## 3- Set up the Docker repository:
    ```bash
-   ng serve
+   sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
    ```
+## 4- Install prerequisite packages for HTTPS over apt:
+   ```bash
+  sudo apt install apt-transport-https ca-certificates curl software-properties-common
+   ```
+## 5- Update your package database again to include Docker packages:
+   ```bash
+  sudo apt update
+   ```
+## 6- Verify you're about to install Docker from the official Docker repository:
+   ```bash
+  apt-cache policy docker-ce
+   ```
+## 7-Install Docker:
+   ```bash
+ sudo apt install docker-ce
+   ```
+## 8-Check that Docker is running:
+   ```bash
+sudo systemctl status docker
+   ```
+## 9- (Optional) Avoid using sudo for Docker commands: Add your user to the docker group so you don’t need to use sudo for Docker commands:
+   ```bash
+sudo usermod -aG docker ${USER}
+   ```
+### Installing Jenkins on Ubuntu EC2
+## 1- Install Java (required for Jenkins):
+ ```bash
+sudo apt install openjdk-11-jdk
+   ```
+## 2- Add Jenkins repository key:
+ ```bash
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+   ```
+## 3- Append Jenkins repository to your sources list:
 
-4. Open `http://localhost:4200` to view the application.
+ ```bash
+echo "deb https://pkg.jenkins.io/debian-stable binary/" | sudo tee -a /etc/apt/sources.list
+   ```
+## 4- Update your package list:
 
+ ```bash
+sudo apt update
+   ```
+## 5- Install Jenkins:
+
+ ```bash
+sudo apt install jenkins
+   ```
+## 6- Start jenkins
+ ```bash
+sudo systemctl start jenkins
+   ```
+## 7- Enable Jenkins to start on boot:
+ ```bash
+sudo systemctl enable jenkins
+   ```
+## 8-Check that Jenkins is running:
+ ```bash
+sudo systemctl status jenkins
+   ```
+##Configuring Firewall (UFW) to Allow Jenkins Traffic
+ ```bash
+sudo ufw status
+sudo ufw allow 8080
+   ```
+### Accessing Jenkins
+## 1- Open a web browser and navigate to:
+http://<your-ec2-ip>:8080
+## 2- Find the initial administrator password: Run the following command to get the Jenkins administrator password:
+ ```bash
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+   ```
+Enter the password into the web interface and follow the setup instructions to install plugins and create an admin user.
 ## Running with Docker
 
 You can easily run both the frontend and backend with Docker using either Docker Compose or Kubernetes.
@@ -140,6 +221,7 @@ You can easily run both the frontend and backend with Docker using either Docker
 2. Run the following command to build and start the containers:
    ```bash
    docker-compose up --build
+   su - ${USER}
    ```
 
 3. Access the frontend at `http://localhost:80` and the backend at `http://localhost:8001`.
