@@ -1,77 +1,274 @@
-# SLO-Monitoring-Dashboard
 
-The goal of this project is to combine knowledge of Site Reliability Engineering (SRE) with practical implementation by creating a comprehensive monitoring and alerting system for a web application.
-
-The web application is a simple trading system that displays real-time stock data. A Python script is used to simulate random web server traffic. The system is designed to track key Service-Level Objectives (SLOs), such as response times and availability, ensuring that the web application operates within defined performance thresholds.
-
+# SLO Monitoring Dashboard
 
 ## Table of Contents
+1. [Introduction](#introduction)
+2. [Application Structure](#application-structure)
+3. [Backend API](#backend-api)
+4. [Frontend Application](#frontend-application)
+5. [CI/CD Pipeline](#ci-cd-pipeline)
+6. [Docker Containers](#docker-containers)
+7. [Development](#development)
 
-#### 🟣 &nbsp; [Installation and usage instructions](#1-installation-and-usage-instructions)
-#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◎ &nbsp; [Usage ]()
-#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ◎ &nbsp; [Tools and dependencies]()
+## Overview
+
+![Dashboard Screenshot](./Documents/dash.png)
+This project is a complete stack monitoring dashboard application that allows users to monitor stock market performance, news, and personal portfolios. The application is divided into two parts:
+
+- **Backend**: A Flask-based API that provides stock data, news, and portfolio information using `yfinance`, `Alpha Vantage`, and Prometheus for monitoring.
+- **Frontend**: An Angular-based dashboard that offers an interface to view the data provided by the backend.
+
+## Features
+
+### Backend
+- Stock information retrieval via `yfinance`.
+- Stock fundamental data via Alpha Vantage API.
+- News and portfolio management using `Flask-SQLAlchemy`.
+- Prometheus metrics integration for monitoring system performance.
+- User authentication and portfolio tracking.
+- Flask CORS support for cross-origin requests.
+- Exposes metrics for Prometheus, including custom metrics such as memory usage, CPU usage, and HTTP status codes.
+
+### Frontend
+- Built with Angular for a responsive user interface.
+- Displays real-time stock data and news.
+- Allows users to view and manage their stock portfolios.
+
+## Application Architecture
+
+The application is composed of two major components:
+1. **Backend (Flask API)**: Provides APIs for stock data, portfolio management, user login, and news.
+2. **Frontend (Angular)**: Displays stock data, market trends, and portfolio information to the user.
+   
+## CI/CD Architecture
+The system is built using Docker, Jenkins, and Kubernetes for scalability and CI/CD.
+1. **Docker**: Containerizes the application, managing the backend, frontend, and other services. The `docker-compose.yml` file orchestrates the containers.
+2. **Jenkins**: Automates the CI/CD pipeline, building, testing, and deploying the application via Docker.
+3. **Kubernetes**: Manages deployment, scaling, and monitoring of containers in production, using the `slo-monitoring-dashboard.yaml` configuration.
+
+### Folder Structure
+```
+SLO-MONITORING-DASHBOARD/
+├── backend/                    # Flask Backend
+│   ├── app.py                  # Main Flask app
+│   ├── Dockerfile              # Dockerfile for Backend
+│   ├── requirements.txt        # Python dependencies
+│   └── prometheus.yml          # Prometheus configuration
+├── frontend/                   # Angular Frontend
+│   ├── src/                    # Angular source code
+│   ├── Dockerfile              # Dockerfile for Frontend
+│   ├── nginx.conf              # Custom Nginx configuration
+│   └── angular.json            # Angular project configuration
+├── docker-compose.yml          # Docker Compose configuration for both backend and frontend
+├── slo-monitoring-dashboard.yaml  # Kubernetes deployment YAML file
+└── README.md                   # Project documentation
+```
+
+## Backend Setup
+
+### Prerequisites
+- Python 3.9+
+- Docker
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/slo-monitoring-dashboard.git
+   cd slo-monitoring-dashboard/backend
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Start the application:
+   ```bash
+   flask run
+   ```
+
+4. Access the Prometheus metrics at `http://localhost:5000/metrics`.
+
+### API Endpoints
+
+- `/stock/<ticker>`: Fetch stock data for the given ticker.
+- `/top-stocks`: Fetch top stock data.
+- `/market-news`: Get the latest market news.
+- `/portfolio`: Get the current portfolio of the logged-in user.
+- `/buy`: Buy stock for the user.
+- `/sell`: Sell stock for the user.
 
 
-#### 🟣 &nbsp; [Project architecture](#2-project-architecture)
-#### 🟣 &nbsp; [File structure of the project](#3-file-structure-of-the-project)
-#### 🟣 &nbsp; [License information](#4-license-information)
+## Frontend Setup
+
+### Prerequisites
+- Node.js 18.x+
+- Angular CLI
+
+### Installation
+
+1. Navigate to the `frontend` directory:
+   ```bash
+   cd ../frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Run the development server:
+   ```bash
+   ng serve
+   ```
+
+4. Open `http://localhost:4200` to view the application.
+
+## Running with Docker
+
+You can easily run both the frontend and backend with Docker using either Docker Compose or Kubernetes.
+
+### Docker Compose
+
+1. Ensure Docker is installed and running on your system.
+2. Run the following command to build and start the containers:
+   ```bash
+   docker-compose up --build
+   ```
+
+3. Access the frontend at `http://localhost:80` and the backend at `http://localhost:8001`.
+
+### Kubernetes
+
+1. Deploy the application using the provided Kubernetes YAML file:
+   ```bash
+   kubectl apply -f slo-monitoring-dashboard.yaml
+   ```
+
+2. Kubernetes will manage the frontend and backend as services. Adjust the `slo-monitoring-dashboard.yaml` file to configure scaling, ingress, and other settings as needed.
 
 
-## 1. Installation and usage instructions
+## Monitoring and Metrics
 
-### Tools and dependencies:
+This project leverages **Prometheus** for collecting application and system metrics, and **Grafana** for visualizing these metrics. The backend exposes various Prometheus metrics related to system performance and HTTP requests, which can be monitored and visualized in Grafana.
 
-- **Jenkins :** Jenkins is an open-source automation server used for continuous integration and continuous delivery (CI/CD). It helps automate the building, testing, and deployment of applications. Documentation is available [here](https://www.jenkins.io/doc/)
+### Prometheus Metrics
+The backend integrates with Prometheus for monitoring. Metrics are exposed at `/metrics` and include:
 
-- **Docker :** Docker is a platform that automates the deployment, scaling, and management of applications using containerisation. Containers bundle an application and its dependencies into a lightweight unit that can run consistently across various environments. Documentation is available [here](https://docs.docker.com/)
+- **Request Count**: Total number of requests to the backend API.
+- **Request Latency**: Time spent processing each request.
+- **Error Count**: Total number of errors in API responses.
+- **Custom Metrics**:
+  - **Memory Usage (RSS and VMS)**: Tracks memory consumption.
+  - **CPU Usage**: Tracks CPU usage.
+  - **HTTP Status Codes**: Counters for informational (1xx), successful (2xx), redirection (3xx), client error (4xx), and server error (5xx) responses.
 
-- **Prometheus :** Prometheus is an open-source monitoring and alerting toolkit designed for reliability and scalability. It is used to collect and store real-time metrics from the web application and system resources. Documentation is available [here](https://prometheus.io/docs/)
+### Grafana Dashboard
 
-- **Grafana :** Grafana is an open-source analytics and monitoring platform that enables the creation of dynamic dashboards and visualisations. Documentation is available [here](https://grafana.com/docs/)
+A Grafana dashboard is used to visualize these metrics. You can access metrics such as request counts, error rates, memory consumption, and CPU usage from the Prometheus backend in real-time.
+
+Here’s an example of how the Grafana dashboard might look:
+
+![Grafana Dashboard](./Documents/Grafana-dash.png)
+![Grafana Dashboard](./Documents/Grafana-dash1.png)
+
+### Services Overview
+
+This project comprises four Docker services:
+1. **Backend Service (Flask API)**: Exposes API endpoints for stock data, portfolio management, and news.
+2. **Frontend Service (Angular)**: Serves the user interface for the dashboard.
+3. **Prometheus**: Scrapes metrics from the backend and other services.
+4. **Grafana**: Visualizes the metrics from Prometheus.
+
+These services are integrated using Docker Compose, and Prometheus automatically scrapes the metrics provided by the backend API at `/metrics`.
+"""
+## Development
+
+### Backend Code Overview
+
+#### `app.py`
+
+- **Database Models**:
+  - **`User`**: Stores user data including username, password, and account balance.
+  - **`Portfolio`**: Tracks stocks owned by a user, including the number of shares, purchase price, and stock ticker.
+  - **`News`**: Holds market news articles along with associated stock tickers.
+
+- **Prometheus Metrics**:
+  - Several metrics are defined using Prometheus client:
+    - **`REQUEST_COUNT`**: Tracks the total number of API requests.
+    - **`ERROR_COUNT`**: Counts the number of errors encountered by the API.
+    - **`CPU_USAGE` and `MEMORY_RSS`**: Gauge CPU and memory usage for monitoring system performance.
+
+- **Stock API Integration**:
+  - Uses the `yfinance` library to fetch stock data from Yahoo Finance.
+  - The `alpha_vantage` library is used to get more detailed financial information, such as income statements.
+
+- **Important Routes**:
+  - **`/stock/<ticker>`**: Fetches current stock price and historical data for the specified ticker.
+  - **`/buy`** and **`/sell`**: Allows users to simulate buying and selling stocks. It adjusts the user's balance and updates their portfolio accordingly.
+
+#### Database Initialization (`init-db` command)
+- When the application is started with the `init-db` command, it:
+  1. Drops all tables and recreates them.
+  2. Seeds the database with a default `admin` user and sample news articles.
+  3. Adds initial portfolio data for the default user.
+
+- **Sample Code**:
+  ```python
+  @app.cli.command('init-db')
+  def init_db_command():
+      db.drop_all()
+      db.create_all()
+      print('All tables dropped and recreated.')
+      # Add default admin user and sample data here.
+
+### Frontend Code Overview
+
+- **Angular Application**:
+  - The frontend is structured as a typical Angular application with components for displaying stock data, portfolio management, and news feeds.
+  - The Angular app communicates with the backend API to fetch stock information and user portfolio data.
+
+- **Key Components**:
+  - **Dashboard Component**: The main user interface for displaying stock data and market news.
+  - **Portfolio Component**: Allows users to view and manage their stock portfolio, including buying and selling stocks.
+  - **Login Component**: Handles user authentication and login functionality.
+  - **News Component**: Displays the latest market news and trends.
+
+- **Services**:
+  - **StockService**: Communicates with the backend to fetch stock data, including prices, history, and financial insights.
+  - **PortfolioService**: Manages user portfolio data, such as adding new stocks and calculating current values.
+  - **AuthService**: Handles user authentication and session management.
+  - **NewsService**: Retrieves market news from the backend API and displays it in the frontend.
+
+- **Routing**:
+  - The frontend uses Angular's routing module to navigate between different sections of the dashboard.
+  - Routes include paths for viewing stock details, managing portfolios, and reading news articles.
+
+- **Build Process**:
+  - The Angular app is built using a multi-stage Dockerfile:
+    1. **Stage 1**: Uses a Node.js image to install dependencies and build the production version of the app with the `ng build --configuration production` command.
+    2. **Stage 2**: Uses an Nginx image to serve the built Angular files from the `/usr/share/nginx/html` directory.
+  
+- **Communication with Backend**:
+  - The frontend communicates with the Flask backend using HTTP requests (via Angular's `HttpClient` module). Data such as stock prices, user portfolios, and market news are fetched from the backend APIs and displayed in the dashboard.
+
+- **Build Commands**:
+  - After setting up the environment, run the following commands to build the frontend application:
+    ```bash
+    npm install  # Install dependencies
+    ng build --configuration production  # Build the Angular app in production mode
+    ```
+
+- **Development Commands**:
+  - To run the Angular application in development mode:
+    ```bash
+    ng serve  # Start the Angular dev server at http://localhost:4200
+    ```
+
+This section provides a high-level overview of the frontend code and its components, services, and build process.
 
 
-<div align="right">
-
-[Back to top](#slo-monitoring-dashboard)
-</div> 
-
-## 2. Project architecture 
 
 
 
-<div align="right">
-
-[Back to top](#slo-monitoring-dashboard)
-</div> 
-
-## 3. File structure of the project
-
-1. **web_traffic_simulator.py :** Script to simulate web server traffic and log response times to a SQLite database.
-
-    - setup_database (function): Sets up the SQLite database to store response times, timestamps, and HTTP status codes.
-    - random_delay (wrapper function): Adds a random delay between each HTTP request to simulate more realistic traffic patterns.
-    - make_request (function): Sends an HTTP GET request to the web application. Logs the response time and status code to the SQLite database.
-    - simulate_traffic (function): Simulates traffic by repeatedly calling make_request for the number of requests defined in NUM_REQUESTS.
-
-1. **JenkinsFIle :** Defines a Jenkins pipeline for building and pushing Docker images for frontend and backend applications.
-
-    - Checkout SCM (stage): Retrieves the source code from the specified Git repository using the 'main' branch and provided credentials.
-    - Build Backend (stage): Builds the Docker image for the backend application and tags it with the current build number.
-    - Build Frontend (stage): Builds the Docker image for the frontend application and tags it with the current build number.
-    - Push Backend (stage): Pushes the backend Docker image to the Docker registry.
-    - Push Frontend (stage): Pushes the frontend Docker image to the Docker registry.
-    - Post Actions (post): Cleans up the workspace after the build process is complete.
-
-
-<div align="right">
-
-[Back to top](#slo-monitoring-dashboard)
-</div> 
-
-## 4. License information
-GNU General Public License (GPL) v3.0
-
-<div align="right">
-
-[Back to top](#slo-monitoring-dashboard)
-</div> 
