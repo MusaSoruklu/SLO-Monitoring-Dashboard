@@ -149,6 +149,110 @@ You can easily run both the frontend and backend with Docker using either Docker
 2. Kubernetes will manage the frontend and backend as services. Adjust the `slo-monitoring-dashboard.yaml` file to configure scaling, ingress, and other settings as needed.
 
 
+## Automated Deployment on AWS EC2 with Jenkins and Docker
+
+This section guides you through setting up an AWS EC2 instance to deploy our application using Jenkins and Docker. It includes steps to configure Jenkins to pull from the GitHub repository and build the application images automatically.
+
+### Prerequisites
+- An active AWS account with permissions to manage EC2, IAM, and EC2 Container Service.
+- A GitHub account with a repository containing your project.
+- Familiarity with basic AWS operations and Docker.
+
+### Setup
+1. **AWS EC2 Instance Setup:**
+   - Launch an EC2 instance using the Amazon Linux 2 AMI.
+   - Ensure the instance has an appropriate security group with ports 80, 443, and 8080 open for web traffic and Jenkins access.
+   - Install Docker and Jenkins on the EC2 instance. Detailed instructions can be found at AWS Documentation or Jenkins installation guide.
+
+2. **Configure Jenkins Credentials:**
+   - Navigate to the Jenkins Dashboard.
+   - Go to `Manage Jenkins` > `Manage Credentials`.
+   - Under `(global)`, use the `Add Credentials` button to add your Docker Hub and GitHub credentials. Assign IDs `my-docker-credentials` and `github-token` respectively.
+
+3. **Jenkins Pipeline Configuration:**
+   - Create a new item on the Jenkins dashboard by selecting `New Item`, then choose `Pipeline` and name your job.
+   - In the Pipeline configuration, paste the following Jenkinsfile script that defines your CI/CD process:
+     ```groovy
+     pipeline {
+         agent any
+
+         environment {
+            DOCKER_CREDENTIALS_ID = 'my-docker-credentials'
+            GITHUB_CREDENTIALS_ID = 'github-token'
+            DOCKER_REGISTRY = 'your-docker-hub-username'
+            FRONTEND_IMAGE = "${DOCKER_REGISTRY}/frontend"
+            BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend"
+         }
+
+         stages {
+             stage('Checkout SCM') {
+                 steps {
+                     git branch: 'main',
+                         url: 'git@github.com:yourgithubusername/your-repo-name.git',
+                         credentialsId: 'github-token'
+                 }
+             }
+
+             stage('Build Backend') {
+                 steps {
+                     script {
+                         docker.build("${BACKEND_IMAGE}:${env.BUILD_NUMBER}", './backend')
+                     }
+                 }
+             }
+
+             stage('Build Frontend') {
+                 steps {
+                     script {
+                         docker.build("${FRONTEND_IMAGE}:${env.BUILD_NUMBER}", './frontend')
+                     }
+                 }
+             }
+
+             stage('Push Backend') {
+                 steps {
+                     script {
+                         docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+                             docker.image("${BACKEND_IMAGE}:${env.BUILD_NUMBER}").push()
+                         }
+                     }
+                 }
+             }
+
+             stage('Push Frontend') {
+                 steps {
+                     script {
+                         docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+                             docker.image("${FRONTEND_IMAGE}:${env.BUILD_NUMBER}").push()
+                         }
+                     }
+                 }
+             }
+
+             stage('Deploy on EC2') {
+                 steps {
+                     sh '''
+                         cd "/var/lib/jenkins/workspace/Your-Job-Name"
+                         docker-compose down
+                         sed -i 's|your-docker-hub-username/frontend:latest|your-docker-hub-username/frontend:'"${BUILD_NUMBER}"'|' docker-compose.yml
+                         sed -i 's|your-docker-hub-username/backend:latest|your-docker-hub-username/backend:'"${BUILD_NUMBER}"'|' docker-compose.yml
+                         docker-compose pull
+                         docker-compose up -d
+                         docker-compose ps
+                     '''
+                 }
+             }
+         }
+     }
+     ```
+
+4. **Running the Pipeline:**
+   - Manually trigger the Jenkins job through the Jenkins dashboard or set up a webhook in your GitHub repository for automatic triggering on each push.
+
+5. **Verification:**
+   - After the Jenkins pipeline completes, check the application by accessing the public IP of your EC2 instance followed by the configured port.
+   - Verify that the application functions correctly with the latest updates.
+
 ## Monitoring and Metrics
 
 This project leverages **Prometheus** for collecting application and system metrics, and **Grafana** for visualizing these metrics. The backend exposes various Prometheus metrics related to system performance and HTTP requests, which can be monitored and visualized in Grafana.
