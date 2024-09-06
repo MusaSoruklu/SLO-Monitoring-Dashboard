@@ -9,6 +9,15 @@
 5. [CI/CD Pipeline](#ci-cd-pipeline)
 6. [Docker Containers](#docker-containers)
 7. [Development](#development)
+    1. [Backend Code Overview](#backend-code-overview)
+    2. [Frontend Code Overview](#frontend-code-overview)
+8. [Kubernetes Deployment](#kubernetes-deployment)
+9. [Installing Docker and Jenkins on an EC2 Instance](#installing-docker-and-jenkins-on-an-ec2-instance)
+10. [Automated Deployment on AWS EC2](#automated-deployment-on-aws-ec2)
+11. [Monitoring and Metrics](#monitoring-and-metrics)
+12. [Prometheus Metrics](#prometheus-metrics)
+13. [Grafana Dashboard](#grafana-dashboard)
+
 
 ## Overview
 
