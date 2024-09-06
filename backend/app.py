@@ -128,9 +128,13 @@ def init_db_command():
     db.session.commit()
     print('Completed database initialization with all sample data.')
 
-@app.route('/metrics')
+@app.route('/metrics', methods=['GET'])
 def metrics():
-    return generate_latest()
+    # Return the metrics in a format that Prometheus expects.
+    content = generate_latest()  # Fetch all the metrics in Prometheus' text format
+    headers = {'Content-Type': 'text/plain; charset=utf-8'}  # Ensure correct headers for Prometheus scraping
+    return Response(content, mimetype="text/plain")
+
 
 def update_system_metrics():
     process = os.getpid()
