@@ -2,16 +2,16 @@
 # SLO Monitoring Dashboard
 
 ## Table of Contents
-1. [Introduction](#introduction)
-2. [Application Structure](#application-structure)
-3. [Backend API](#backend-api)
-4. [Frontend Application](#frontend-application)
-5. [CI/CD Pipeline](#ci-cd-pipeline)
-6. [Docker Containers](#docker-containers)
+1. [Introduction](#overview)
+2. [Application Structure](#application-architecture)
+3. [Backend API](#backend-setup)
+4. [Frontend Application](#frontend-setup)
+5. [CI/CD Pipeline](#ci-cd-architecture)
+6. [Docker Containers](#docker-compose)
 7. [Development](#development)
     1. [Backend Code Overview](#backend-code-overview)
     2. [Frontend Code Overview](#frontend-code-overview)
-8. [Kubernetes Deployment](#kubernetes-deployment)
+8. [Kubernetes Deployment](#kubernetes)
 9. [Installing Docker and Jenkins on an EC2 Instance](#installing-docker-and-jenkins-on-an-ec2-instance)
 10. [Automated Deployment on AWS EC2](#automated-deployment-on-aws-ec2)
 11. [Monitoring and Metrics](#monitoring-and-metrics)
