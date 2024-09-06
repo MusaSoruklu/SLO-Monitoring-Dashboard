@@ -40,7 +40,7 @@ ts = TimeSeries(key=api_key)
 fd = FundamentalData(key=api_key)
 
 # Start a Prometheus metrics server on port 8000
-start_http_server(5000)
+#start_http_server(5000)
 
 class News(db.Model):
     id = db.Column(db.Integer, primary_key=True)
