@@ -121,11 +121,11 @@ This guide provides steps to install Docker and Jenkins on an AWS EC2 instance r
 1. **AWS EC2 instance**: Make sure your EC2 instance is running and accessible (Ubuntu 20.04 or later is recommended).
 2. **SSH Access**: Ensure you can connect to your instance via SSH using the appropriate key pair.
 
-### Step 1: Update the EC2 Instance
+###  Update the EC2 Instance
 Before installing any packages, it's a good practice to update the package manager:
 ```bash
 sudo apt update && sudo apt upgrade -y
-###Step 2: Install Docker
+### Install Docker
 ## 1- Install required dependencies:
    ```bash
    sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
