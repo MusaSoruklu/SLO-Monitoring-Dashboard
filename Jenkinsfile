@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         DOCKER_CREDENTIALS_ID = 'my-docker-credentials'  // Use the ID you set in Jenkins
-        DOCKER_REGISTRY = 'saeidnkh'  // Your Docker Hub username
+        GITHUB_CREDENTIALS_ID = 'github-token'  // Use the ID you created in the previous step
+        DOCKER_REGISTRY = 'mnikkilla'  // Your Docker Hub username
         FRONTEND_IMAGE = "${DOCKER_REGISTRY}/frontend"  // Replace with your frontend repo name
         BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend"  // Replace with your backend repo name
     }
@@ -12,8 +13,8 @@ pipeline {
         stage('Checkout SCM') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/MusaSoruklu/SLO-Monitoring-Dashboard.git',
-                    credentialsId: '393c2634-6f7b-4e89-9814-9e7b5df6594d'
+                    url: 'git@github.com:MusaSoruklu/SLO-Monitoring-Dashboard.git',
+                    credentialsId: 'ssh-id'  // Updated to use PAT for authentication
             }
         }
 
@@ -52,11 +53,36 @@ pipeline {
                 }
             }
         }
-    }
-
-    post {
-        always {
-            cleanWs()
+        
+        stage('Deploy on EC2') {
+            steps {
+                sh '''
+                    # Navigate to the directory where the docker-compose.yml file is located
+                    cd "/var/lib/jenkins/workspace/Job 1"
+            
+                    # Stop the running containers
+                    docker-compose down
+            
+                    # Update docker-compose.yml with the latest build number for frontend and backend
+                    sed -i 's|mnikkilla/frontend:16|mnikkilla/frontend:'"${BUILD_NUMBER}"'|' docker-compose.yml
+                    sed -i 's|mnikkilla/backend:16|mnikkilla/backend:'"${BUILD_NUMBER}"'|' docker-compose.yml
+            
+                    # Pull the latest images from Docker Hub
+                    docker-compose pull
+            
+                    # Start the containers with the latest images in detached mode
+                    docker-compose up -d
+            
+                    # Optionally, check the status of the containers
+                    docker-compose ps
+                '''
+            }
         }
     }
+
+    // post {
+    //     always {
+    //         cleanWs()
+    //     }
+    // }
 }
